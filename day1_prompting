@@ -1,1 +1,2498 @@
-{"metadata":{"kernelspec":{"name":"python3","display_name":"Python 3","language":"python"},"language_info":{"name":"python","version":"3.10.14","mimetype":"text/x-python","codemirror_mode":{"name":"ipython","version":3},"pygments_lexer":"ipython3","nbconvert_exporter":"python","file_extension":".py"},"colab":{"name":"day-1-prompting.ipynb","toc_visible":true},"kaggle":{"accelerator":"none","dataSources":[],"dockerImageVersionId":30786,"isInternetEnabled":true,"language":"python","sourceType":"notebook","isGpuEnabled":false}},"nbformat_minor":4,"nbformat":4,"cells":[{"cell_type":"markdown","source":"##### Copyright 2024 Google LLC.","metadata":{"id":"jkxRSYjzA1oX"}},{"cell_type":"code","source":"# @title Licensed under the Apache License, Version 2.0 (the \"License\");\n# you may not use this file except in compliance with the License.\n# You may obtain a copy of the License at\n#\n# https://www.apache.org/licenses/LICENSE-2.0\n#\n# Unless required by applicable law or agreed to in writing, software\n# distributed under the License is distributed on an \"AS IS\" BASIS,\n# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n# See the License for the specific language governing permissions and\n# limitations under the License.","metadata":{"cellView":"form","id":"5u5OZ2ShA3BA","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T19:06:47.347973Z","iopub.execute_input":"2024-11-11T19:06:47.348451Z","iopub.status.idle":"2024-11-11T19:06:47.353548Z","shell.execute_reply.started":"2024-11-11T19:06:47.348411Z","shell.execute_reply":"2024-11-11T19:06:47.352421Z"}},"outputs":[],"execution_count":48},{"cell_type":"markdown","source":"# Day 1 - Prompting\n\nWelcome to the Kaggle 5-day Generative AI course!\n\nThis notebook will show you how to get started with the Gemini API and walk you through some of the example prompts and techniques that you can also read about in the Prompting whitepaper. You don't need to read the whitepaper to use this notebook, but the papers will give you some theoretical context and background to complement this interactive notebook.\n\n\n## Before you begin\n\nIn this notebook, you'll start exploring prompts and prompt parameters using the Python SDK and AI Studio. For some inspiration, you might enjoy exploring some apps that have been built using the Gemini family of models. Here are a few that we like, and we think you will too.\n\n* [TextFX](https://textfx.withgoogle.com/) is a suite of AI-powered tools for rappers, made in collaboration with Lupe Fiasco,\n* [SQL Talk](https://sql-talk-r5gdynozbq-uc.a.run.app/) shows how you can talk directly to a database using the Gemini API,\n* [NotebookLM](https://notebooklm.google/) uses Gemini models to build your own personal AI research assistant.\n\n\n### A note on the Gemini API and Vertex AI\n\nIn the whitepapers, most of the example code uses the Enterprise [Vertex AI platform](https://cloud.google.com/vertex-ai). In contrast, this notebook, along with the others in this series, will use the [Gemini Developer API](https://ai.google.dev/gemini-api/) and [AI Studio](https://aistudio.google.com/).\n\nBoth APIs provide access to the Gemini family of models, and the code to interact with the models is very similar. Vertex provides a world-class platform for enterprises, governments and advanced users that need powerful features like data governance, ML ops and deep Google Cloud integration.\n\nAI Studio is free to use and only requires a compatible Google account to log in and get started. It is deeply integrated with the Gemini API, which comes with a generous [free tier](https://ai.google.dev/pricing) that you can use to run the code in these exercises.\n\nIf you are already set up with Google Cloud, you can check out the [Enterprise Gemini API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference) through Vertex AI, and run the samples directly from the supplied whitepapers.","metadata":{"id":"csNPnkuCobmG"}},{"cell_type":"markdown","source":"## Get started with Kaggle notebooks\n\nIf this is your first time using a Kaggle notebook, welcome! You can read about how to use Kaggle notebooks [in the docs](https://www.kaggle.com/docs/notebooks).\n\nFirst, you will need to phone verify your account at kaggle.com/settings.\n\n![](https://storage.googleapis.com/kaggle-media/Images/5dgai_0.png)","metadata":{"id":"f00ea7c99e44"},"attachments":{}},{"cell_type":"markdown","source":"To run this notebook, as well as the others in this course, you will need to make a copy, or fork, the notebook. Look for the `Copy and Edit` button in the top-right, and **click it** to make an editable, private copy of the notebook. It should look like this one:\n\n![Copy and Edit button](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_1.png)\n\nYour copy will now have a ▶️ **Run** button next to each code cell that you can press to execute that cell. These notebooks are expected to be run in order from top-to-bottom, but you are encouraged to add new cells, run your own code and explore. If you get stuck, you can try the `Factory reset` option in the `Run` menu, or head back to the original notebook and make a fresh copy.\n\n![Run cell button](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_2.png)\n\n### Problems?\n\nIf you have any problems, head over to the [Kaggle Discord](https://discord.com/invite/kaggle), find the [`#5dgai-q-and-a` channel](https://discord.com/channels/1101210829807956100/1303438695143178251) and ask for help.","metadata":{}},{"cell_type":"markdown","source":"## Get started with the Gemini API\n\nAll of the exercises in this notebook will use the [Gemini API](https://ai.google.dev/gemini-api/) by way of the [Python SDK](https://pypi.org/project/google-generativeai/). Each of these prompts can be accessed directly in [Google AI Studio](https://aistudio.google.com/) too, so if you would rather use a web interface and skip the code for this activity, look for the <img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> AI Studio link on each prompt.","metadata":{"id":"ExkOXcPxtTb5"}},{"cell_type":"markdown","source":"Next, you will need to add your API key to your Kaggle Notebook as a Kaggle User Secret.\n\n![](https://storage.googleapis.com/kaggle-media/Images/5dgai_1.png)\n![](https://storage.googleapis.com/kaggle-media/Images/5dgai_2.png)\n![](https://storage.googleapis.com/kaggle-media/Images/5dgai_3.png)\n![](https://storage.googleapis.com/kaggle-media/Images/5dgai_4.png)","metadata":{}},{"cell_type":"markdown","source":"### Install the SDK","metadata":{"id":"UAjUV3BsvFXQ"}},{"cell_type":"code","source":"%pip install -U -q \"google-generativeai>=0.8.3\"","metadata":{"id":"NzwzJFU9LqkJ","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:19.252592Z","iopub.execute_input":"2024-11-11T18:29:19.253019Z","iopub.status.idle":"2024-11-11T18:29:31.394099Z","shell.execute_reply.started":"2024-11-11T18:29:19.252979Z","shell.execute_reply":"2024-11-11T18:29:31.392597Z"}},"outputs":[{"name":"stdout","text":"Note: you may need to restart the kernel to use updated packages.\n","output_type":"stream"}],"execution_count":23},{"cell_type":"code","source":"import google.generativeai as genai\nfrom IPython.display import HTML, Markdown, display","metadata":{"id":"5DwxYIRavMST","execution":{"iopub.status.busy":"2024-11-11T18:29:31.396424Z","iopub.execute_input":"2024-11-11T18:29:31.396839Z","iopub.status.idle":"2024-11-11T18:29:31.402442Z","shell.execute_reply.started":"2024-11-11T18:29:31.396787Z","shell.execute_reply":"2024-11-11T18:29:31.401359Z"},"trusted":true},"outputs":[],"execution_count":24},{"cell_type":"markdown","source":"### Set up your API key\n\nTo run the following cell, your API key must be stored it in a [Kaggle secret](https://www.kaggle.com/discussions/product-feedback/114053) named `GOOGLE_API_KEY`.\n\nIf you don't already have an API key, you can grab one from [AI Studio](https://aistudio.google.com/app/apikey). You can find [detailed instructions in the docs](https://ai.google.dev/gemini-api/docs/api-key).\n\nTo make the key available through Kaggle secrets, choose `Secrets` from the `Add-ons` menu and follow the instructions to add your key or enable it for this notebook.","metadata":{"id":"DNEt2BCOvOJ1"}},{"cell_type":"code","source":"from kaggle_secrets import UserSecretsClient\n\nGOOGLE_API_KEY = UserSecretsClient().get_secret(\"GOOGLE_API_KEY\")\ngenai.configure(api_key=GOOGLE_API_KEY)","metadata":{"id":"SHl0bkPCvayd","execution":{"iopub.status.busy":"2024-11-11T18:29:31.403864Z","iopub.execute_input":"2024-11-11T18:29:31.404455Z","iopub.status.idle":"2024-11-11T18:29:31.713982Z","shell.execute_reply.started":"2024-11-11T18:29:31.404383Z","shell.execute_reply":"2024-11-11T18:29:31.712736Z"},"trusted":true},"outputs":[],"execution_count":25},{"cell_type":"markdown","source":"If you received an error response along the lines of `No user secrets exist for kernel id ...`, then you need to add your API key via `Add-ons`, `Secrets` **and** enable it.\n\n![Screenshot of the checkbox to enable GOOGLE_API_KEY secret](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_3.png)","metadata":{"id":"4e720472fd86"},"attachments":{}},{"cell_type":"markdown","source":"### Run your first prompt\n\nIn this step, you will test that your API key is set up correctly by making a request. The `gemini-1.5-flash` model has been selected here.","metadata":{"id":"H_YXCYIKvyZJ"}},{"cell_type":"code","source":"flash = genai.GenerativeModel('gemini-1.5-flash')\nresponse = flash.generate_content(\"Explain AI to me like I'm a kid.\")\nprint(response.text)","metadata":{"id":"BV1o0PmcvyJF","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:31.716985Z","iopub.execute_input":"2024-11-11T18:29:31.717381Z","iopub.status.idle":"2024-11-11T18:29:33.145432Z","shell.execute_reply.started":"2024-11-11T18:29:31.717343Z","shell.execute_reply":"2024-11-11T18:29:33.144006Z"}},"outputs":[{"name":"stdout","text":"Imagine you have a really smart robot friend. This robot can learn just like you! \n\nIt can read lots of books, watch lots of videos, and play lots of games. The more it learns, the smarter it gets!\n\nAI, which stands for Artificial Intelligence, is just like that robot friend. It's a computer program that can learn and solve problems. \n\nHere are some things AI can do:\n\n* **Help you find the best song to listen to:** AI can learn your music taste and recommend songs you'll love!\n* **Drive your car:**  Some cars use AI to drive themselves, keeping you safe.\n* **Play games:** AI can even play games with you and get really good at it! \n\nAI is still learning and getting better every day. It's amazing how much it can already do, and it will be even more amazing in the future! \n\n","output_type":"stream"}],"execution_count":26},{"cell_type":"markdown","source":"The response often comes back in markdown format, which you can render directly in this notebook.","metadata":{"id":"f60ed9d8ae41"}},{"cell_type":"code","source":"Markdown(response.text)","metadata":{"id":"c933e5e460a5","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:33.147024Z","iopub.execute_input":"2024-11-11T18:29:33.147411Z","iopub.status.idle":"2024-11-11T18:29:33.156271Z","shell.execute_reply.started":"2024-11-11T18:29:33.147375Z","shell.execute_reply":"2024-11-11T18:29:33.154953Z"}},"outputs":[{"execution_count":27,"output_type":"execute_result","data":{"text/plain":"<IPython.core.display.Markdown object>","text/markdown":"Imagine you have a really smart robot friend. This robot can learn just like you! \n\nIt can read lots of books, watch lots of videos, and play lots of games. The more it learns, the smarter it gets!\n\nAI, which stands for Artificial Intelligence, is just like that robot friend. It's a computer program that can learn and solve problems. \n\nHere are some things AI can do:\n\n* **Help you find the best song to listen to:** AI can learn your music taste and recommend songs you'll love!\n* **Drive your car:**  Some cars use AI to drive themselves, keeping you safe.\n* **Play games:** AI can even play games with you and get really good at it! \n\nAI is still learning and getting better every day. It's amazing how much it can already do, and it will be even more amazing in the future! \n"},"metadata":{}}],"execution_count":27},{"cell_type":"markdown","source":"### Start a chat\n\nThe previous example uses a single-turn, text-in/text-out structure, but you can also set up a multi-turn chat structure too.","metadata":{"id":"byx0pT9ZMW2Q"}},{"cell_type":"code","source":"chat = flash.start_chat(history=[])\nresponse = chat.send_message('Hello! My name is Jesús.')\nprint(response.text)","metadata":{"id":"lV_S5ZL5MidD","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:33.158027Z","iopub.execute_input":"2024-11-11T18:29:33.158463Z","iopub.status.idle":"2024-11-11T18:29:33.721149Z","shell.execute_reply.started":"2024-11-11T18:29:33.158424Z","shell.execute_reply":"2024-11-11T18:29:33.720014Z"}},"outputs":[{"name":"stdout","text":"Hello Jesús, nice to meet you! 👋  What can I do for you today? 😊 \n\n","output_type":"stream"}],"execution_count":28},{"cell_type":"code","source":"response = chat.send_message('Can you tell something interesting about dinosaurs?')\nprint(response.text)","metadata":{"id":"7b0372c3c64a","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:33.722557Z","iopub.execute_input":"2024-11-11T18:29:33.722904Z","iopub.status.idle":"2024-11-11T18:29:34.834411Z","shell.execute_reply.started":"2024-11-11T18:29:33.722869Z","shell.execute_reply":"2024-11-11T18:29:34.833044Z"}},"outputs":[{"name":"stdout","text":"Of course! Dinosaurs are endlessly fascinating. Here's something interesting: \n\n**Did you know that some dinosaurs had feathers?**\n\nWhile we often picture dinosaurs as scaly beasts,  evidence shows that many, including the iconic Tyrannosaurus Rex, had feathers!  This discovery has changed our understanding of dinosaur evolution and their relationship to birds.  Scientists believe feathers may have originally evolved for insulation, display, or even flight in some species. \n\nWhat do you think about that?  Would you like to hear more about feathered dinosaurs or something else about these amazing creatures? \n\n","output_type":"stream"}],"execution_count":29},{"cell_type":"code","source":"# While you have the `chat` object around, the conversation state\n# persists. Confirm that by asking if it knows my name.\nresponse = chat.send_message('Do you remember what my name is?')\nprint(response.text)","metadata":{"id":"d3f9591392a7","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:34.836153Z","iopub.execute_input":"2024-11-11T18:29:34.837179Z","iopub.status.idle":"2024-11-11T18:29:36.081438Z","shell.execute_reply.started":"2024-11-11T18:29:34.837113Z","shell.execute_reply":"2024-11-11T18:29:36.079978Z"}},"outputs":[{"name":"stdout","text":"Of course! You're Jesús. 😊  I'm still learning, but I try my best to remember names and keep track of our conversations.  What else can I help you with today? \n\n","output_type":"stream"}],"execution_count":30},{"cell_type":"markdown","source":"### Choose a model\n\nThe Gemini API provides access to a number of models from the Gemini model family. Read about the available models and their capabilities on the [model overview page](https://ai.google.dev/gemini-api/docs/models/gemini).\n\nIn this step you'll use the API to list all of the available models.","metadata":{"id":"2KAjpr1200sW"}},{"cell_type":"code","source":"for model in genai.list_models():\n  print(model.name)","metadata":{"id":"uUUZa2uq2jDm","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:36.083142Z","iopub.execute_input":"2024-11-11T18:29:36.083527Z","iopub.status.idle":"2024-11-11T18:29:36.928216Z","shell.execute_reply.started":"2024-11-11T18:29:36.083490Z","shell.execute_reply":"2024-11-11T18:29:36.926750Z"}},"outputs":[{"name":"stdout","text":"models/chat-bison-001\nmodels/text-bison-001\nmodels/embedding-gecko-001\nmodels/gemini-1.0-pro-latest\nmodels/gemini-1.0-pro\nmodels/gemini-pro\nmodels/gemini-1.0-pro-001\nmodels/gemini-1.0-pro-vision-latest\nmodels/gemini-pro-vision\nmodels/gemini-1.5-pro-latest\nmodels/gemini-1.5-pro-001\nmodels/gemini-1.5-pro-002\nmodels/gemini-1.5-pro\nmodels/gemini-1.5-pro-exp-0801\nmodels/gemini-1.5-pro-exp-0827\nmodels/gemini-1.5-flash-latest\nmodels/gemini-1.5-flash-001\nmodels/gemini-1.5-flash-001-tuning\nmodels/gemini-1.5-flash\nmodels/gemini-1.5-flash-exp-0827\nmodels/gemini-1.5-flash-002\nmodels/gemini-1.5-flash-8b\nmodels/gemini-1.5-flash-8b-001\nmodels/gemini-1.5-flash-8b-latest\nmodels/gemini-1.5-flash-8b-exp-0827\nmodels/gemini-1.5-flash-8b-exp-0924\nmodels/embedding-001\nmodels/text-embedding-004\nmodels/aqa\n","output_type":"stream"}],"execution_count":31},{"cell_type":"markdown","source":"The [`models.list`](https://ai.google.dev/api/models#method:-models.list) response also returns additional information about the model's capabilities, like the token limits and supported parameters.","metadata":{"id":"rN49kSI54R1v"}},{"cell_type":"code","source":"for model in genai.list_models():\n  if model.name == 'models/gemini-1.5-flash':\n    print(model)\n    break","metadata":{"id":"k7JJ1K6j4Rl8","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:36.932614Z","iopub.execute_input":"2024-11-11T18:29:36.933021Z","iopub.status.idle":"2024-11-11T18:29:37.760290Z","shell.execute_reply.started":"2024-11-11T18:29:36.932986Z","shell.execute_reply":"2024-11-11T18:29:37.759135Z"}},"outputs":[{"name":"stdout","text":"Model(name='models/gemini-1.5-flash',\n      base_model_id='',\n      version='001',\n      display_name='Gemini 1.5 Flash',\n      description='Fast and versatile multimodal model for scaling across diverse tasks',\n      input_token_limit=1000000,\n      output_token_limit=8192,\n      supported_generation_methods=['generateContent', 'countTokens'],\n      temperature=1.0,\n      max_temperature=2.0,\n      top_p=0.95,\n      top_k=40)\n","output_type":"stream"}],"execution_count":32},{"cell_type":"markdown","source":"## Explore generation parameters\n\n","metadata":{"id":"5rU_UBlZdooM"}},{"cell_type":"markdown","source":"### Output length\n\nWhen generating text with an LLM, the output length affects cost and performance. Generating more tokens increases computation, leading to higher energy consumption, latency, and cost.\n\nTo stop the model from generating tokens past a limit, you can specify the `max_output_length` parameter when using the Gemini API. Specifying this parameter does not influence the generation of the output tokens, so the output will not become more stylistically or textually succinct, but it will stop generating tokens once the specified length is reached. Prompt engineering may be required to generate a more complete output for your given limit.","metadata":{"id":"G7NfEizeipbW"}},{"cell_type":"code","source":"short_model = genai.GenerativeModel(\n    'gemini-1.5-flash',\n    generation_config=genai.GenerationConfig(max_output_tokens=200))\n\nresponse = short_model.generate_content('Write a 1000 word essay on the importance of olives in modern society.')\nprint(response.text)","metadata":{"id":"qVf23JsIi9ma","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:37.761767Z","iopub.execute_input":"2024-11-11T18:29:37.762250Z","iopub.status.idle":"2024-11-11T18:29:39.799483Z","shell.execute_reply.started":"2024-11-11T18:29:37.762195Z","shell.execute_reply":"2024-11-11T18:29:39.798204Z"}},"outputs":[{"name":"stdout","text":"## The Enduring Charm of the Olive: A Culinary and Cultural Icon in Modern Society\n\nThe olive, a small, seemingly unremarkable fruit, holds a place of immense cultural and economic significance in modern society. More than just a culinary ingredient, the olive has woven itself into the fabric of history, religion, and daily life, leaving an indelible mark on global cuisine, health, and commerce. Its journey from ancient times to present-day relevance is a testament to its versatility, resilience, and enduring charm.\n\n**A Culinary Journey Through Time:** The olive has been a staple food for millennia. Archaeological evidence suggests olive cultivation dates back to 6000 BC in the Mediterranean region. Its long history is reflected in the diverse culinary uses that span cultures and continents. From the traditional Greek Kalamata olive, prized for its briny flavor, to the buttery, slightly sweet Arbequina olive favored in Spain, the olive's diverse varieties offer a spectrum of tastes and textures. \n\n\n","output_type":"stream"}],"execution_count":33},{"cell_type":"code","source":"response = short_model.generate_content('Write a short poem on the importance of olives in modern society.')\nprint(response.text)","metadata":{"id":"W-3kR2F5kdMR","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:39.801083Z","iopub.execute_input":"2024-11-11T18:29:39.801541Z","iopub.status.idle":"2024-11-11T18:29:40.874701Z","shell.execute_reply.started":"2024-11-11T18:29:39.801502Z","shell.execute_reply":"2024-11-11T18:29:40.873556Z"}},"outputs":[{"name":"stdout","text":"From sun-drenched groves to tables grand,\nThe olive, a treasure, in every land.\nIts oil, a gift, both savory and bright,\nA taste of the sun, a culinary light.\n\nFrom salads fresh to fragrant bread,\nThe olive's essence, a flavor to spread.\nIts gentle touch, a healthy delight,\nA symbol of peace, in the morning light.\n\nSo raise a glass, to this ancient fruit,\nA taste of history, a timeless loot.\nIn modern times, its value still holds,\nThe olive's story, forever unfolds. \n\n","output_type":"stream"}],"execution_count":34},{"cell_type":"markdown","source":"Explore with your own prompts. Try a prompt with a restrictive output limit and then adjust the prompt to work within that limit.","metadata":{"id":"3ZhDSLB6lqqB"}},{"cell_type":"markdown","source":"### Temperature\n\nTemperature controls the degree of randomness in token selection. Higher temperatures result in a higher number of candidate tokens from which the next output token is selected, and can produce more diverse results, while lower temperatures have the opposite effect, such that a temperature of 0 results in greedy decoding, selecting the most probable token at each step.\n\nTemperature doesn't provide any guarantees of randomness, but it can be used to \"nudge\" the output somewhat.","metadata":{"id":"alx-WaAvir_9"}},{"cell_type":"code","source":"import time\nhigh_temp_model = genai.GenerativeModel(\n    'gemini-1.5-flash-001',\n    generation_config=genai.GenerationConfig(temperature=2.0))\n\nfor _ in range(5):\n    response = high_temp_model.generate_content('Pick a random colour... (in a single word)')\n    if response.parts:\n        print(response.text, '-' * 25)\n\n    # Take a break before making a new API request\n    time.sleep(30)","metadata":{"id":"SHraGMzqnZqt","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:29:40.875998Z","iopub.execute_input":"2024-11-11T18:29:40.876383Z","iopub.status.idle":"2024-11-11T18:32:13.950272Z","shell.execute_reply.started":"2024-11-11T18:29:40.876316Z","shell.execute_reply":"2024-11-11T18:32:13.948876Z"}},"outputs":[{"name":"stdout","text":"Purple \n -------------------------\nTeal \n -------------------------\nBlue \n -------------------------\nPurple. \n -------------------------\nBlue \n -------------------------\n","output_type":"stream"}],"execution_count":35},{"cell_type":"markdown","source":"Now try the same prompt with temperature set to zero. Note that the output is not completely deterministic, as other parameters affect token selection, but the results will tend to be more stable.","metadata":{"id":"z3J4pCTuof7e"}},{"cell_type":"code","source":"low_temp_model = genai.GenerativeModel(\n    'gemini-1.5-flash-001',\n    generation_config=genai.GenerationConfig(temperature=0.0))\n\nfor _ in range(5):\n    response = low_temp_model.generate_content('Pick a random colour... (in a single word)')\n    if response.parts:\n        print(response.text, '-' * 25)\n\n    # Take a break before making a new API request\n    time.sleep(30)","metadata":{"id":"clymkWv-PfUZ","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:32:13.952056Z","iopub.execute_input":"2024-11-11T18:32:13.952564Z","iopub.status.idle":"2024-11-11T18:34:46.410912Z","shell.execute_reply.started":"2024-11-11T18:32:13.952510Z","shell.execute_reply":"2024-11-11T18:34:46.409551Z"}},"outputs":[{"name":"stdout","text":"Purple \n -------------------------\nPurple \n -------------------------\nPurple \n -------------------------\nPurple \n -------------------------\nPurple \n -------------------------\n","output_type":"stream"}],"execution_count":36},{"cell_type":"markdown","source":"### Top-K and top-P\n\nLike temperature, top-K and top-P parameters are also used to control the diversity of the model's output.\n\nTop-K is a positive integer that defines the number of most probable tokens from which to select the output token. A top-K of 1 selects a single token, performing greedy decoding.\n\nTop-P defines the probability threshold that, once cumulatively exceeded, tokens stop being selected as candidates. A top-P of 0 is typically equivalent to greedy decoding, and a top-P of 1 typically selects every token in the model's vocabulary.\n\nWhen both are supplied, the Gemini API will filter top-K tokens first, then top-P and then finally sample from the candidate tokens using the supplied temperature.\n\nRun this example a number of times, change the settings and observe the change in output.","metadata":{"id":"St5nt3vzitsZ"}},{"cell_type":"code","source":"model = genai.GenerativeModel(\n    'gemini-1.5-flash-001',\n    generation_config=genai.GenerationConfig(\n        # These are the default values for gemini-1.5-flash-001.\n        temperature=1.0,\n        top_k=64,\n        top_p=0.95,\n    ))\n\nstory_prompt = \"You are a creative writer. Write a short story about a cat who goes on an adventure.\"\nresponse = model.generate_content(story_prompt)\nprint(response.text)","metadata":{"id":"lPlzpEavUV8F","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:34:46.412657Z","iopub.execute_input":"2024-11-11T18:34:46.413055Z","iopub.status.idle":"2024-11-11T18:34:49.172573Z","shell.execute_reply.started":"2024-11-11T18:34:46.413016Z","shell.execute_reply":"2024-11-11T18:34:49.171430Z"}},"outputs":[{"name":"stdout","text":"Bartholomew was no ordinary tabby. While his siblings snoozed in sunbeams, he dreamt of faraway places, of rustling leaves and whispering winds. One day, a particularly plump robin landed on his windowsill, its breast a fiery beacon against the morning sky. It chirped a tale of a forgotten garden, a secret oasis hidden behind the old bakery.  Bartholomew's whiskers twitched. He was off!\n\nHe slipped out the window, a shadow in the morning light. The familiar streets blurred into a kaleidoscope of smells – warm bread from the bakery, damp earth, the tang of rain. His tail swished with excitement, his heart thumping a wild rhythm. He followed the robin's song, a melody that led him deeper and deeper into the maze of the city.\n\nThe bakery was a forgotten relic, its facade chipped and faded, the garden overgrown with weeds. Bartholomew, however, saw beauty in the wildness. He weaved through the tangle of roses, their thorns scratching his fur. He chased butterflies with iridescent wings, their fluttering a dance of light. He met a friendly squirrel, who told him tales of buried treasures and secret paths.\n\nThen, Bartholomew saw it. A magnificent, ancient oak, its branches reaching towards the sky like gnarled fingers. A swing, rusty and forgotten, hung from one limb. Bartholomew, with a leap that surprised even himself, landed on the seat, his claws digging into the wood. He closed his eyes, the wind whipping through his fur, the sun warming his back.\n\nHe was home. Not the home of his family, but the home of his dreams, a secret sanctuary filled with the magic of the untamed. Bartholomew, the ordinary tabby, had become Bartholomew, the adventurer. He knew, as the sun dipped below the horizon, painting the sky in hues of orange and gold, that this was only the beginning.\n\nFrom then on, Bartholomew's life was a tapestry woven with adventure. He was a shadow flitting through the city, a whisper of fur and whisker, a creature of the forgotten corners, the secret paths, the wild dreams. He was the cat who had found his own world, a world that existed beyond the sunbeams, a world of whispers and rustling leaves and the quiet beauty of the untamed. \n\n","output_type":"stream"}],"execution_count":37},{"cell_type":"markdown","source":"## Prompting\n\nThis section contains some prompts from the chapter for you to try out directly in the API. Try changing the text here to see how each prompt performs with different instructions, more examples, or any other changes you can think of.","metadata":{"id":"rMrYs1koY6DX"}},{"cell_type":"markdown","source":"### Zero-shot\n\nZero-shot prompts are prompts that describe the request for the model directly.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1gzKKgDHwkAvexG5Up0LMtl1-6jKMKe4g\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>","metadata":{"id":"hhj_tQidZJP7"}},{"cell_type":"code","source":"model = genai.GenerativeModel(\n    'gemini-1.5-flash-001',\n    generation_config=genai.GenerationConfig(\n        temperature=0.1,\n        top_p=1,\n        max_output_tokens=5,\n    ))\n\nzero_shot_prompt = \"\"\"Classify movie reviews as POSITIVE, NEUTRAL or NEGATIVE.\nReview: \"Her\" is a disturbing study revealing the direction\nhumanity is headed if AI is allowed to keep evolving,\nunchecked. I wish there were more movies like this masterpiece.\nSentiment: \"\"\"\n\nresponse = model.generate_content(zero_shot_prompt)\nprint(response.text)","metadata":{"id":"1_t-cwnDZzbH","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:19.563672Z","iopub.execute_input":"2024-11-11T18:36:19.564212Z","iopub.status.idle":"2024-11-11T18:36:20.043228Z","shell.execute_reply.started":"2024-11-11T18:36:19.564165Z","shell.execute_reply":"2024-11-11T18:36:20.041517Z"}},"outputs":[{"name":"stdout","text":"Sentiment: **POSITIVE**\n","output_type":"stream"}],"execution_count":39},{"cell_type":"markdown","source":"#### Enum mode\n\nThe models are trained to generate text, and can sometimes produce more text than you may wish for. In the preceding example, the model will output the label, sometimes it can include a preceding \"Sentiment\" label, and without an output token limit, it may also add explanatory text afterwards.\n\nThe Gemini API has an [Enum mode](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Enum.ipynb) feature that allows you to constrain the output to a fixed set of values.","metadata":{"id":"3b5568bdeb11"}},{"cell_type":"code","source":"import enum\n\nclass Sentiment(enum.Enum):\n    POSITIVE = \"positive\"\n    NEUTRAL = \"neutral\"\n    NEGATIVE = \"negative\"\n\n\nmodel = genai.GenerativeModel(\n    'gemini-1.5-flash-001',\n    generation_config=genai.GenerationConfig(\n        response_mime_type=\"text/x.enum\",\n        response_schema=Sentiment\n    ))\n\nresponse = model.generate_content(zero_shot_prompt)\nprint(response.text)","metadata":{"id":"ad118a56c598","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:35.466188Z","iopub.execute_input":"2024-11-11T18:36:35.466608Z","iopub.status.idle":"2024-11-11T18:36:36.113411Z","shell.execute_reply.started":"2024-11-11T18:36:35.466571Z","shell.execute_reply":"2024-11-11T18:36:36.112149Z"}},"outputs":[{"name":"stdout","text":"positive\n","output_type":"stream"}],"execution_count":40},{"cell_type":"markdown","source":"### One-shot and few-shot\n\nProviding an example of the expected response is known as a \"one-shot\" prompt. When you provide multiple examples, it is a \"few-shot\" prompt.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1jjWkjUSoMXmLvMJ7IzADr_GxHPJVV2bg\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>","metadata":{"id":"0udiSwNbv45W"}},{"cell_type":"code","source":"model = genai.GenerativeModel(\n    'gemini-1.5-flash-latest',\n    generation_config=genai.GenerationConfig(\n        temperature=0.1,\n        top_p=1,\n        max_output_tokens=250,\n    ))\n\nfew_shot_prompt = \"\"\"Parse a customer's pizza order into valid JSON:\n\nEXAMPLE:\nI want a small pizza with cheese, tomato sauce, and pepperoni.\nJSON Response:\n```\n{\n\"size\": \"small\",\n\"type\": \"normal\",\n\"ingredients\": [\"cheese\", \"tomato sauce\", \"peperoni\"]\n}\n```\n\nEXAMPLE:\nCan I get a large pizza with tomato sauce, basil and mozzarella\nJSON Response:\n```\n{\n\"size\": \"large\",\n\"type\": \"normal\",\n\"ingredients\": [\"tomato sauce\", \"basil\", \"mozzarella\"]\n}\n\nORDER:\n\"\"\"\n\ncustomer_order = \"Give me a large with cheese & pineapple\"\n\n\nresponse = model.generate_content([few_shot_prompt, customer_order])\nprint(response.text)","metadata":{"id":"hd4mVUukwOKZ","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:42.403474Z","iopub.execute_input":"2024-11-11T18:36:42.403935Z","iopub.status.idle":"2024-11-11T18:36:43.029412Z","shell.execute_reply.started":"2024-11-11T18:36:42.403848Z","shell.execute_reply":"2024-11-11T18:36:43.027908Z"}},"outputs":[{"name":"stdout","text":"```json\n{\n\"size\": \"large\",\n\"type\": \"normal\",\n\"ingredients\": [\"cheese\", \"pineapple\"]\n}\n``` \n\n","output_type":"stream"}],"execution_count":41},{"cell_type":"markdown","source":"#### JSON mode\n\nTo provide control over the schema, and to ensure that you only receive JSON (with no other text or markdown), you can use the Gemini API's [JSON mode](https://github.com/google-gemini/cookbook/blob/main/quickstarts/JSON_mode.ipynb). This forces the model to constrain decoding, such that token selection is guided by the supplied schema.","metadata":{"id":"021293096f08"}},{"cell_type":"code","source":"import typing_extensions as typing\n\nclass PizzaOrder(typing.TypedDict):\n    size: str\n    ingredients: list[str]\n    type: str\n\n\nmodel = genai.GenerativeModel(\n    'gemini-1.5-flash-latest',\n    generation_config=genai.GenerationConfig(\n        temperature=0.1,\n        response_mime_type=\"application/json\",\n        response_schema=PizzaOrder,\n    ))\n\nresponse = model.generate_content(\"Can I have a large dessert pizza with apple and chocolate\")\nprint(response.text)","metadata":{"id":"50fbf0260912","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:46.667562Z","iopub.execute_input":"2024-11-11T18:36:46.668086Z","iopub.status.idle":"2024-11-11T18:36:47.272396Z","shell.execute_reply.started":"2024-11-11T18:36:46.668016Z","shell.execute_reply":"2024-11-11T18:36:47.271182Z"}},"outputs":[{"name":"stdout","text":"{\"ingredients\": [\"apple\", \"chocolate\"], \"size\": \"large\", \"type\": \"dessert\"}\n\n","output_type":"stream"}],"execution_count":42},{"cell_type":"markdown","source":"### Chain of Thought (CoT)\n\nDirect prompting on LLMs can return answers quickly and (in terms of output token usage) efficiently, but they can be prone to hallucination. The answer may \"look\" correct (in terms of language and syntax) but is incorrect in terms of factuality and reasoning.\n\nChain-of-Thought prompting is a technique where you instruct the model to output intermediate reasoning steps, and it typically gets better results, especially when combined with few-shot examples. It is worth noting that this technique doesn't completely eliminate hallucinations, and that it tends to cost more to run, due to the increased token count.\n\nAs models like the Gemini family are trained to be \"chatty\" and provide reasoning steps, you can ask the model to be more direct in the prompt.","metadata":{"id":"4a93e338e57c"}},{"cell_type":"code","source":"prompt = \"\"\"When I was 4 years old, my partner was 3 times my age. Now, I\nam 20 years old. How old is my partner? Return the answer immediately.\"\"\"\n\nmodel = genai.GenerativeModel('gemini-1.5-flash-latest')\nresponse = model.generate_content(prompt)\n\nprint(response.text)","metadata":{"id":"5715555db1c1","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:53.495938Z","iopub.execute_input":"2024-11-11T18:36:53.496403Z","iopub.status.idle":"2024-11-11T18:36:54.202485Z","shell.execute_reply.started":"2024-11-11T18:36:53.496354Z","shell.execute_reply":"2024-11-11T18:36:54.201401Z"}},"outputs":[{"name":"stdout","text":"When you were 4, your partner was 12 (3 times your age).  That means your partner is 8 years older than you.\n\nSince you are now 20, your partner is **28 years old**. \n\n","output_type":"stream"}],"execution_count":43},{"cell_type":"markdown","source":"Now try the same approach, but indicate to the model that it should \"think step by step\".","metadata":{"id":"e12b19677bfd"}},{"cell_type":"code","source":"prompt = \"\"\"When I was 4 years old, my partner was 3 times my age. Now,\nI am 20 years old. How old is my partner? Let's think step by step.\"\"\"\n\nresponse = model.generate_content(prompt)\nprint(response.text)","metadata":{"id":"ffd7536a481f","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:36:59.045539Z","iopub.execute_input":"2024-11-11T18:36:59.046024Z","iopub.status.idle":"2024-11-11T18:36:59.854906Z","shell.execute_reply.started":"2024-11-11T18:36:59.045979Z","shell.execute_reply":"2024-11-11T18:36:59.853709Z"}},"outputs":[{"name":"stdout","text":"Here's how to solve this:\n\n* **When you were 4:** Your partner was 3 times your age, meaning they were 4 * 3 = 12 years old.\n* **Age difference:** This means your partner is 12 - 4 = 8 years older than you.\n* **Current age:** Since you are now 20, your partner is 20 + 8 = **28 years old**. \n\n","output_type":"stream"}],"execution_count":44},{"cell_type":"markdown","source":"### ReAct: Reason and act\n\nIn this example you will run a ReAct prompt directly in the Gemini API and perform the searching steps yourself. As this prompt follows a well-defined structure, there are frameworks available that wrap the prompt into easier-to-use APIs that make tool calls automatically, such as the LangChain example from the chapter.\n\nTo try this out with the Wikipedia search engine, check out the [Searching Wikipedia with ReAct](https://github.com/google-gemini/cookbook/blob/main/examples/Search_Wikipedia_using_ReAct.ipynb) cookbook example.\n\n\n> Note: The prompt and in-context examples used here are from [https://github.com/ysymyth/ReAct](https://github.com/ysymyth/ReAct) which is published under a [MIT license](https://opensource.org/licenses/MIT), Copyright (c) 2023 Shunyu Yao.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/18oo63Lwosd-bQ6Ay51uGogB3Wk3H8XMO\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>\n","metadata":{"id":"oiLgBQJj0V53"}},{"cell_type":"code","source":"model_instructions = \"\"\"\nSolve a question answering task with interleaving Thought, Action, Observation steps. Thought can reason about the current situation,\nObservation is understanding relevant information from an Action's output and Action can be one of three types:\n (1) <search>entity</search>, which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it\n     will return some similar entities to search and you can try to search the information from those topics.\n (2) <lookup>keyword</lookup>, which returns the next sentence containing keyword in the current context. This only does exact matches,\n     so keep your searches short.\n (3) <finish>answer</finish>, which returns the answer and finishes the task.\n\"\"\"\n\nexample1 = \"\"\"Question\nMusician and satirist Allie Goertz wrote a song about the \"The Simpsons\" character Milhouse, who Matt Groening named after who?\n\nThought 1\nThe question simplifies to \"The Simpsons\" character Milhouse is named after who. I only need to search Milhouse and find who it is named after.\n\nAction 1\n<search>Milhouse</search>\n\nObservation 1\nMilhouse Mussolini Van Houten is a recurring character in the Fox animated television series The Simpsons voiced by Pamela Hayden and created by Matt Groening.\n\nThought 2\nThe paragraph does not tell who Milhouse is named after, maybe I can look up \"named after\".\n\nAction 2\n<lookup>named after</lookup>\n\nObservation 2\nMilhouse was named after U.S. president Richard Nixon, whose middle name was Milhous.\n\nThought 3\nMilhouse was named after U.S. president Richard Nixon, so the answer is Richard Nixon.\n\nAction 3\n<finish>Richard Nixon</finish>\n\"\"\"\n\nexample2 = \"\"\"Question\nWhat is the elevation range for the area that the eastern sector of the Colorado orogeny extends into?\n\nThought 1\nI need to search Colorado orogeny, find the area that the eastern sector of the Colorado orogeny extends into, then find the elevation range of the area.\n\nAction 1\n<search>Colorado orogeny</search>\n\nObservation 1\nThe Colorado orogeny was an episode of mountain building (an orogeny) in Colorado and surrounding areas.\n\nThought 2\nIt does not mention the eastern sector. So I need to look up eastern sector.\n\nAction 2\n<lookup>eastern sector</lookup>\n\nObservation 2\nThe eastern sector extends into the High Plains and is called the Central Plains orogeny.\n\nThought 3\nThe eastern sector of Colorado orogeny extends into the High Plains. So I need to search High Plains and find its elevation range.\n\nAction 3\n<search>High Plains</search>\n\nObservation 3\nHigh Plains refers to one of two distinct land regions\n\nThought 4\nI need to instead search High Plains (United States).\n\nAction 4\n<search>High Plains (United States)</search>\n\nObservation 4\nThe High Plains are a subregion of the Great Plains. From east to west, the High Plains rise in elevation from around 1,800 to 7,000 ft (550 to 2,130m).\n\nThought 5\nHigh Plains rise in elevation from around 1,800 to 7,000 ft, so the answer is 1,800 to 7,000 ft.\n\nAction 5\n<finish>1,800 to 7,000 ft</finish>\n\"\"\"\n\n# Come up with more examples yourself, or take a look through https://github.com/ysymyth/ReAct/","metadata":{"id":"cBgyNJ5z0VSs","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:37:08.166864Z","iopub.execute_input":"2024-11-11T18:37:08.167287Z","iopub.status.idle":"2024-11-11T18:37:08.175478Z","shell.execute_reply.started":"2024-11-11T18:37:08.167247Z","shell.execute_reply":"2024-11-11T18:37:08.174030Z"}},"outputs":[],"execution_count":45},{"cell_type":"markdown","source":"To capture a single step at a time, while ignoring any hallucinated Observation steps, you will use `stop_sequences` to end the generation process. The steps are `Thought`, `Action`, `Observation`, in that order.","metadata":{"id":"C3wbfstjTgey"}},{"cell_type":"code","source":"question = \"\"\"Question\nWho was the youngest author listed on the transformers NLP paper?\n\"\"\"\n\nmodel = genai.GenerativeModel('gemini-1.5-flash-latest')\nreact_chat = model.start_chat()\n\n# You will perform the Action, so generate up to, but not including, the Observation.\nconfig = genai.GenerationConfig(stop_sequences=[\"\\nObservation\"])\n\nresp = react_chat.send_message(\n    [model_instructions, example1, example2, question],\n    generation_config=config)\nprint(resp.text)","metadata":{"id":"8mxrXRkRTdXm","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:37:19.005611Z","iopub.execute_input":"2024-11-11T18:37:19.006554Z","iopub.status.idle":"2024-11-11T18:37:20.592146Z","shell.execute_reply.started":"2024-11-11T18:37:19.006503Z","shell.execute_reply":"2024-11-11T18:37:20.590811Z"}},"outputs":[{"name":"stdout","text":"Thought 1\nI need to find the Transformers NLP paper and see who the authors are. Then I need to determine the youngest author.\n\nAction 1\n<search>Transformers NLP paper</search>\n\n","output_type":"stream"}],"execution_count":46},{"cell_type":"markdown","source":"Now you can perform this research yourself and supply it back to the model.","metadata":{"id":"aW2PIdLbVv3l"}},{"cell_type":"code","source":"observation = \"\"\"Observation 1\n[1706.03762] Attention Is All You Need\nAshish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, Illia Polosukhin\nWe propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.\n\"\"\"\nresp = react_chat.send_message(observation, generation_config=config)\nprint(resp.text)","metadata":{"id":"mLMc0DZaV9g2","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T18:37:23.870218Z","iopub.execute_input":"2024-11-11T18:37:23.871151Z","iopub.status.idle":"2024-11-11T18:37:24.602846Z","shell.execute_reply.started":"2024-11-11T18:37:23.871101Z","shell.execute_reply":"2024-11-11T18:37:24.601447Z"}},"outputs":[{"name":"stdout","text":"Thought 2\nThe paper lists the authors but does not specify their ages. I need to find the age information for each author.\n\nAction 2\n<search>Ashish Vaswani age</search> \n\n","output_type":"stream"}],"execution_count":47},{"cell_type":"markdown","source":"This process repeats until the `<finish>` action is reached. You can continue running this yourself if you like, or try the [Wikipedia example](https://github.com/google-gemini/cookbook/blob/main/examples/Search_Wikipedia_using_ReAct.ipynb) to see a fully automated ReAct system at work.","metadata":{"id":"bo0tzf4nX6dA"}},{"cell_type":"markdown","source":"## Code prompting","metadata":{"id":"jPiZ_eIIaVPt"}},{"cell_type":"markdown","source":"### Generating code\n\nThe Gemini family of models can be used to generate code, configuration and scripts. Generating code can be helpful when learning to code, learning a new language or for rapidly generating a first draft.\n\nIt's important to be aware that since LLMs can't reason, and can repeat training data, it's essential to read and test your code first, and comply with any relevant licenses.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1YX71JGtzDjXQkgdes8bP6i3oH5lCRKxv\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>","metadata":{"id":"ZinKamwXeR6C"}},{"cell_type":"code","source":"model = genai.GenerativeModel(\n    'gemini-1.5-flash-latest',\n    generation_config=genai.GenerationConfig(\n        temperature=1,\n        top_p=1,\n        max_output_tokens=1024,\n    ))\n\n# Gemini 1.5 models are very chatty, so it helps to specify they stick to the code.\ncode_prompt = \"\"\"\nWrite a Python function to calculate the factorial of a number. No explanation, provide only the code.\n\"\"\"\n\nresponse = model.generate_content(code_prompt)\nMarkdown(response.text)","metadata":{"id":"fOQP9pqmeUO1","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T19:48:45.814541Z","iopub.execute_input":"2024-11-11T19:48:45.814951Z","iopub.status.idle":"2024-11-11T19:48:46.422057Z","shell.execute_reply.started":"2024-11-11T19:48:45.814912Z","shell.execute_reply":"2024-11-11T19:48:46.420923Z"}},"outputs":[{"execution_count":49,"output_type":"execute_result","data":{"text/plain":"<IPython.core.display.Markdown object>","text/markdown":"```python\ndef factorial(n):\n  if n == 0:\n    return 1\n  else:\n    return n * factorial(n-1)\n```"},"metadata":{}}],"execution_count":49},{"cell_type":"markdown","source":"### Code execution\n\nThe Gemini API can automatically run generated code too, and will return the output.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/11veFr_VYEwBWcLkhNLr-maCG0G8sS_7Z\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>","metadata":{"id":"wlBMWSFhgVRQ"}},{"cell_type":"code","source":"model = genai.GenerativeModel(\n    'gemini-1.5-flash-latest',\n    tools='code_execution')\n\ncode_exec_prompt = \"\"\"\nCalculate the sum of the first 14 prime numbers. Only consider the even primes, and make sure you get them all.\n\"\"\"\n\nresponse = model.generate_content(code_exec_prompt)\nMarkdown(response.text)","metadata":{"id":"jT3OfWYfhjRL","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T19:52:01.238257Z","iopub.execute_input":"2024-11-11T19:52:01.238687Z","iopub.status.idle":"2024-11-11T19:52:01.909977Z","shell.execute_reply.started":"2024-11-11T19:52:01.238651Z","shell.execute_reply":"2024-11-11T19:52:01.908847Z"}},"outputs":[{"execution_count":54,"output_type":"execute_result","data":{"text/plain":"<IPython.core.display.Markdown object>","text/markdown":"The only even prime number is 2. All other even numbers are divisible by 2 and therefore not prime.\n\nThe sum of the first 14 prime numbers is 2. \n"},"metadata":{}}],"execution_count":54},{"cell_type":"markdown","source":"While this looks like a single-part response, you can inspect the response to see the each of the steps: initial text, code generation, execution results, and final text summary.","metadata":{"id":"ZspT1GSkjG6d"}},{"cell_type":"code","source":"for part in response.candidates[0].content.parts:\n    print(part)\n    print(\"-----\")","metadata":{"id":"j4gQVzcRjRX-","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T19:52:04.180604Z","iopub.execute_input":"2024-11-11T19:52:04.181037Z","iopub.status.idle":"2024-11-11T19:52:04.188681Z","shell.execute_reply.started":"2024-11-11T19:52:04.180988Z","shell.execute_reply":"2024-11-11T19:52:04.187292Z"}},"outputs":[{"name":"stdout","text":"text: \"The only even prime number is 2. All other even numbers are divisible by 2 and therefore not prime.\\n\\nThe sum of the first 14 prime numbers is 2. \\n\"\n\n-----\n","output_type":"stream"}],"execution_count":55},{"cell_type":"markdown","source":"### Explaining code\n\nThe Gemini family of models can explain code to you too.\n\n<table align=left>\n  <td>\n    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1N7LGzWzCYieyOf_7bAG4plrmkpDNmUyb\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n  </td>\n</table>","metadata":{"id":"1gUX8QzCj4d5"}},{"cell_type":"code","source":"file_contents = !curl https://raw.githubusercontent.com/magicmonty/bash-git-prompt/refs/heads/master/gitprompt.sh\n\nexplain_prompt = f\"\"\"\nPlease explain what this file does at a very high level. What is it, and why would I use it?\n\n```\n{file_contents}\n```\n\"\"\"\n\nmodel = genai.GenerativeModel('gemini-1.5-flash-latest')\n\nresponse = model.generate_content(explain_prompt)\nMarkdown(response.text)","metadata":{"id":"7_jPMMoxkIEb","trusted":true,"execution":{"iopub.status.busy":"2024-11-11T19:50:54.043576Z","iopub.execute_input":"2024-11-11T19:50:54.043963Z","iopub.status.idle":"2024-11-11T19:50:57.131474Z","shell.execute_reply.started":"2024-11-11T19:50:54.043930Z","shell.execute_reply":"2024-11-11T19:50:57.130417Z"}},"outputs":[{"execution_count":52,"output_type":"execute_result","data":{"text/plain":"<IPython.core.display.Markdown object>","text/markdown":"This file is a Bash script that provides a highly customizable Git prompt for your terminal. Here's a breakdown at a high level:\n\n**What it does:**\n\n* **Loads color themes:** The script defines functions to load color themes for your prompt. You can choose from built-in themes or create your own custom theme.\n* **Gets Git information:** It runs Git commands to retrieve information like the current branch, upstream status, staged changes, unstaged changes, and conflicts.\n* **Formats the prompt:** It uses the retrieved information to format a visually appealing and informative prompt, including branch names, status symbols, and possibly remote information. \n* **Handles virtual environments:** It can display your current virtual environment (if any) as part of the prompt.\n* **Customizable options:** It offers numerous options for customization, including:\n    * Defining colors and symbols\n    * Controlling what information is displayed\n    * Setting the order and appearance of prompt elements\n\n**Why you would use it:**\n\n* **Enhanced Git awareness:** The script provides a clear and concise overview of your current Git repository state right in your prompt, enhancing your workflow.\n* **Improved efficiency:** By quickly seeing the branch, status, and other information, you can navigate your project and perform Git operations more effectively.\n* **Customization:** The script gives you fine-grained control over the look and feel of your prompt, allowing you to tailor it to your preferences. \n\n**How to use it:**\n\n1. **Download:** Get the script from its source.\n2. **Source it:**  Add the following line to your `.bashrc` or `.zshrc` file:\n   ```bash\n   source /path/to/git-prompt.sh\n   ```\n3. **Enable the prompt:** The script will automatically display the enhanced Git prompt whenever you're in a Git repository. You can also configure it to only show the prompt in specific scenarios (e.g., only in repositories).\n\n**Note:** The script relies on several Git commands, so ensure you have Git installed on your system. \n"},"metadata":{}}],"execution_count":52},{"cell_type":"markdown","source":"## Learn more\n\nTo learn more about prompting in depth:\n\n* Check out the whitepaper issued with today's content,\n* Try out the apps listed at the top of this notebook ([TextFX](https://textfx.withgoogle.com/), [SQL Talk](https://sql-talk-r5gdynozbq-uc.a.run.app/) and [NotebookLM](https://notebooklm.google/)),\n* Read the [Introduction to Prompting](https://ai.google.dev/gemini-api/docs/prompting-intro) from the Gemini API docs,\n* Explore the Gemini API's [prompt gallery](https://ai.google.dev/gemini-api/prompts) and try them out in AI Studio,\n* Check out the Gemini API cookbook for [inspirational examples](https://github.com/google-gemini/cookbook/blob/main/examples/) and [educational quickstarts](https://github.com/google-gemini/cookbook/blob/main/quickstarts/).\n\nAnd please share anything exciting you have tried in the Discord!","metadata":{"id":"2a8266d97ce5"}},{"cell_type":"code","source":"","metadata":{"trusted":true},"outputs":[],"execution_count":null},{"cell_type":"code","source":"","metadata":{"trusted":true},"outputs":[],"execution_count":null}]}
+{
+ "cells": [
+  {
+   "cell_type": "markdown",
+   "id": "e7e29bd9",
+   "metadata": {
+    "id": "jkxRSYjzA1oX",
+    "papermill": {
+     "duration": 0.013704,
+     "end_time": "2024-11-11T23:45:19.796095",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.782391",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "##### Copyright 2024 Google LLC."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "7f7715f9",
+   "metadata": {
+    "cellView": "form",
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:19.824851Z",
+     "iopub.status.busy": "2024-11-11T23:45:19.824401Z",
+     "iopub.status.idle": "2024-11-11T23:45:19.830324Z",
+     "shell.execute_reply": "2024-11-11T23:45:19.829201Z"
+    },
+    "id": "5u5OZ2ShA3BA",
+    "papermill": {
+     "duration": 0.02375,
+     "end_time": "2024-11-11T23:45:19.832796",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.809046",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "# @title Licensed under the Apache License, Version 2.0 (the \"License\");\n",
+    "# you may not use this file except in compliance with the License.\n",
+    "# You may obtain a copy of the License at\n",
+    "#\n",
+    "# https://www.apache.org/licenses/LICENSE-2.0\n",
+    "#\n",
+    "# Unless required by applicable law or agreed to in writing, software\n",
+    "# distributed under the License is distributed on an \"AS IS\" BASIS,\n",
+    "# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n",
+    "# See the License for the specific language governing permissions and\n",
+    "# limitations under the License."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5a00960b",
+   "metadata": {
+    "id": "csNPnkuCobmG",
+    "papermill": {
+     "duration": 0.012812,
+     "end_time": "2024-11-11T23:45:19.858655",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.845843",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "# Day 1 - Prompting\n",
+    "\n",
+    "Welcome to the Kaggle 5-day Generative AI course!\n",
+    "\n",
+    "This notebook will show you how to get started with the Gemini API and walk you through some of the example prompts and techniques that you can also read about in the Prompting whitepaper. You don't need to read the whitepaper to use this notebook, but the papers will give you some theoretical context and background to complement this interactive notebook.\n",
+    "\n",
+    "\n",
+    "## Before you begin\n",
+    "\n",
+    "In this notebook, you'll start exploring prompts and prompt parameters using the Python SDK and AI Studio. For some inspiration, you might enjoy exploring some apps that have been built using the Gemini family of models. Here are a few that we like, and we think you will too.\n",
+    "\n",
+    "* [TextFX](https://textfx.withgoogle.com/) is a suite of AI-powered tools for rappers, made in collaboration with Lupe Fiasco,\n",
+    "* [SQL Talk](https://sql-talk-r5gdynozbq-uc.a.run.app/) shows how you can talk directly to a database using the Gemini API,\n",
+    "* [NotebookLM](https://notebooklm.google/) uses Gemini models to build your own personal AI research assistant.\n",
+    "\n",
+    "\n",
+    "### A note on the Gemini API and Vertex AI\n",
+    "\n",
+    "In the whitepapers, most of the example code uses the Enterprise [Vertex AI platform](https://cloud.google.com/vertex-ai). In contrast, this notebook, along with the others in this series, will use the [Gemini Developer API](https://ai.google.dev/gemini-api/) and [AI Studio](https://aistudio.google.com/).\n",
+    "\n",
+    "Both APIs provide access to the Gemini family of models, and the code to interact with the models is very similar. Vertex provides a world-class platform for enterprises, governments and advanced users that need powerful features like data governance, ML ops and deep Google Cloud integration.\n",
+    "\n",
+    "AI Studio is free to use and only requires a compatible Google account to log in and get started. It is deeply integrated with the Gemini API, which comes with a generous [free tier](https://ai.google.dev/pricing) that you can use to run the code in these exercises.\n",
+    "\n",
+    "If you are already set up with Google Cloud, you can check out the [Enterprise Gemini API](https://cloud.google.com/vertex-ai/generative-ai/docs/model-reference/inference) through Vertex AI, and run the samples directly from the supplied whitepapers."
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "id": "72327336",
+   "metadata": {
+    "id": "f00ea7c99e44",
+    "papermill": {
+     "duration": 0.012335,
+     "end_time": "2024-11-11T23:45:19.883677",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.871342",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Get started with Kaggle notebooks\n",
+    "\n",
+    "If this is your first time using a Kaggle notebook, welcome! You can read about how to use Kaggle notebooks [in the docs](https://www.kaggle.com/docs/notebooks).\n",
+    "\n",
+    "First, you will need to phone verify your account at kaggle.com/settings.\n",
+    "\n",
+    "![](https://storage.googleapis.com/kaggle-media/Images/5dgai_0.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "fee76016",
+   "metadata": {
+    "papermill": {
+     "duration": 0.012349,
+     "end_time": "2024-11-11T23:45:19.908850",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.896501",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "To run this notebook, as well as the others in this course, you will need to make a copy, or fork, the notebook. Look for the `Copy and Edit` button in the top-right, and **click it** to make an editable, private copy of the notebook. It should look like this one:\n",
+    "\n",
+    "![Copy and Edit button](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_1.png)\n",
+    "\n",
+    "Your copy will now have a ▶️ **Run** button next to each code cell that you can press to execute that cell. These notebooks are expected to be run in order from top-to-bottom, but you are encouraged to add new cells, run your own code and explore. If you get stuck, you can try the `Factory reset` option in the `Run` menu, or head back to the original notebook and make a fresh copy.\n",
+    "\n",
+    "![Run cell button](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_2.png)\n",
+    "\n",
+    "### Problems?\n",
+    "\n",
+    "If you have any problems, head over to the [Kaggle Discord](https://discord.com/invite/kaggle), find the [`#5dgai-q-and-a` channel](https://discord.com/channels/1101210829807956100/1303438695143178251) and ask for help."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "762e9432",
+   "metadata": {
+    "id": "ExkOXcPxtTb5",
+    "papermill": {
+     "duration": 0.012482,
+     "end_time": "2024-11-11T23:45:19.934199",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.921717",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Get started with the Gemini API\n",
+    "\n",
+    "All of the exercises in this notebook will use the [Gemini API](https://ai.google.dev/gemini-api/) by way of the [Python SDK](https://pypi.org/project/google-generativeai/). Each of these prompts can be accessed directly in [Google AI Studio](https://aistudio.google.com/) too, so if you would rather use a web interface and skip the code for this activity, look for the <img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> AI Studio link on each prompt."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "9d9666cb",
+   "metadata": {
+    "papermill": {
+     "duration": 0.012637,
+     "end_time": "2024-11-11T23:45:19.959504",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.946867",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "Next, you will need to add your API key to your Kaggle Notebook as a Kaggle User Secret.\n",
+    "\n",
+    "![](https://storage.googleapis.com/kaggle-media/Images/5dgai_1.png)\n",
+    "![](https://storage.googleapis.com/kaggle-media/Images/5dgai_2.png)\n",
+    "![](https://storage.googleapis.com/kaggle-media/Images/5dgai_3.png)\n",
+    "![](https://storage.googleapis.com/kaggle-media/Images/5dgai_4.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "5311cae8",
+   "metadata": {
+    "id": "UAjUV3BsvFXQ",
+    "papermill": {
+     "duration": 0.012536,
+     "end_time": "2024-11-11T23:45:19.984795",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.972259",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Install the SDK"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 2,
+   "id": "fbc80844",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:20.011760Z",
+     "iopub.status.busy": "2024-11-11T23:45:20.011367Z",
+     "iopub.status.idle": "2024-11-11T23:45:49.039910Z",
+     "shell.execute_reply": "2024-11-11T23:45:49.038272Z"
+    },
+    "id": "NzwzJFU9LqkJ",
+    "papermill": {
+     "duration": 29.045492,
+     "end_time": "2024-11-11T23:45:49.042888",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:19.997396",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Note: you may need to restart the kernel to use updated packages.\n"
+     ]
+    }
+   ],
+   "source": [
+    "%pip install -U -q \"google-generativeai>=0.8.3\""
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 3,
+   "id": "feef461c",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:49.071011Z",
+     "iopub.status.busy": "2024-11-11T23:45:49.070572Z",
+     "iopub.status.idle": "2024-11-11T23:45:50.172131Z",
+     "shell.execute_reply": "2024-11-11T23:45:50.170967Z"
+    },
+    "id": "5DwxYIRavMST",
+    "papermill": {
+     "duration": 1.119088,
+     "end_time": "2024-11-11T23:45:50.174992",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:49.055904",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "import google.generativeai as genai\n",
+    "from IPython.display import HTML, Markdown, display"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "145bfe51",
+   "metadata": {
+    "id": "DNEt2BCOvOJ1",
+    "papermill": {
+     "duration": 0.012397,
+     "end_time": "2024-11-11T23:45:50.200604",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:50.188207",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Set up your API key\n",
+    "\n",
+    "To run the following cell, your API key must be stored it in a [Kaggle secret](https://www.kaggle.com/discussions/product-feedback/114053) named `GOOGLE_API_KEY`.\n",
+    "\n",
+    "If you don't already have an API key, you can grab one from [AI Studio](https://aistudio.google.com/app/apikey). You can find [detailed instructions in the docs](https://ai.google.dev/gemini-api/docs/api-key).\n",
+    "\n",
+    "To make the key available through Kaggle secrets, choose `Secrets` from the `Add-ons` menu and follow the instructions to add your key or enable it for this notebook."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 4,
+   "id": "7c00f18f",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:50.228500Z",
+     "iopub.status.busy": "2024-11-11T23:45:50.227698Z",
+     "iopub.status.idle": "2024-11-11T23:45:50.423931Z",
+     "shell.execute_reply": "2024-11-11T23:45:50.422875Z"
+    },
+    "id": "SHl0bkPCvayd",
+    "papermill": {
+     "duration": 0.212949,
+     "end_time": "2024-11-11T23:45:50.426583",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:50.213634",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "from kaggle_secrets import UserSecretsClient\n",
+    "\n",
+    "GOOGLE_API_KEY = UserSecretsClient().get_secret(\"GOOGLE_API_KEY\")\n",
+    "genai.configure(api_key=GOOGLE_API_KEY)"
+   ]
+  },
+  {
+   "attachments": {},
+   "cell_type": "markdown",
+   "id": "64b2d35c",
+   "metadata": {
+    "id": "4e720472fd86",
+    "papermill": {
+     "duration": 0.013961,
+     "end_time": "2024-11-11T23:45:50.453809",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:50.439848",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "If you received an error response along the lines of `No user secrets exist for kernel id ...`, then you need to add your API key via `Add-ons`, `Secrets` **and** enable it.\n",
+    "\n",
+    "![Screenshot of the checkbox to enable GOOGLE_API_KEY secret](https://storage.googleapis.com/kaggle-media/Images/5gdai_sc_3.png)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8942ad77",
+   "metadata": {
+    "id": "H_YXCYIKvyZJ",
+    "papermill": {
+     "duration": 0.012634,
+     "end_time": "2024-11-11T23:45:50.480089",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:50.467455",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Run your first prompt\n",
+    "\n",
+    "In this step, you will test that your API key is set up correctly by making a request. The `gemini-1.5-flash` model has been selected here."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 5,
+   "id": "5a421679",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:50.509353Z",
+     "iopub.status.busy": "2024-11-11T23:45:50.508912Z",
+     "iopub.status.idle": "2024-11-11T23:45:52.289901Z",
+     "shell.execute_reply": "2024-11-11T23:45:52.288423Z"
+    },
+    "id": "BV1o0PmcvyJF",
+    "papermill": {
+     "duration": 1.799262,
+     "end_time": "2024-11-11T23:45:52.292361",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:50.493099",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Imagine you have a super smart friend who can learn from everything you do. You show them pictures of dogs, and they learn what a dog looks like. You tell them stories, and they learn how to talk. They even get better at understanding you the more you talk to them!\n",
+      "\n",
+      "That's kind of like AI, or Artificial Intelligence. It's like a computer brain that can learn and do things just like humans, but even faster and better! AI can:\n",
+      "\n",
+      "* **Play games:** Like chess or video games!\n",
+      "* **Help you find things:** Like the best song to listen to or the closest restaurant.\n",
+      "* **Make art:** Like pictures or even music!\n",
+      "* **Translate languages:** So you can talk to people from different countries.\n",
+      "\n",
+      "AI is still learning, just like a kid learning to walk or talk. But it's already helping us in so many ways! Just like you learn new things every day, AI is constantly getting smarter and more helpful! \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "flash = genai.GenerativeModel('gemini-1.5-flash')\n",
+    "response = flash.generate_content(\"Explain AI to me like I'm a kid.\")\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7bda756a",
+   "metadata": {
+    "id": "f60ed9d8ae41",
+    "papermill": {
+     "duration": 0.012605,
+     "end_time": "2024-11-11T23:45:52.318293",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:52.305688",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "The response often comes back in markdown format, which you can render directly in this notebook."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 6,
+   "id": "30b03315",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:52.346115Z",
+     "iopub.status.busy": "2024-11-11T23:45:52.345558Z",
+     "iopub.status.idle": "2024-11-11T23:45:52.354709Z",
+     "shell.execute_reply": "2024-11-11T23:45:52.353343Z"
+    },
+    "id": "c933e5e460a5",
+    "papermill": {
+     "duration": 0.025611,
+     "end_time": "2024-11-11T23:45:52.356986",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:52.331375",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/markdown": [
+       "Imagine you have a super smart friend who can learn from everything you do. You show them pictures of dogs, and they learn what a dog looks like. You tell them stories, and they learn how to talk. They even get better at understanding you the more you talk to them!\n",
+       "\n",
+       "That's kind of like AI, or Artificial Intelligence. It's like a computer brain that can learn and do things just like humans, but even faster and better! AI can:\n",
+       "\n",
+       "* **Play games:** Like chess or video games!\n",
+       "* **Help you find things:** Like the best song to listen to or the closest restaurant.\n",
+       "* **Make art:** Like pictures or even music!\n",
+       "* **Translate languages:** So you can talk to people from different countries.\n",
+       "\n",
+       "AI is still learning, just like a kid learning to walk or talk. But it's already helping us in so many ways! Just like you learn new things every day, AI is constantly getting smarter and more helpful! \n"
+      ],
+      "text/plain": [
+       "<IPython.core.display.Markdown object>"
+      ]
+     },
+     "execution_count": 6,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "Markdown(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bc8ffc0f",
+   "metadata": {
+    "id": "byx0pT9ZMW2Q",
+    "papermill": {
+     "duration": 0.012879,
+     "end_time": "2024-11-11T23:45:52.383078",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:52.370199",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Start a chat\n",
+    "\n",
+    "The previous example uses a single-turn, text-in/text-out structure, but you can also set up a multi-turn chat structure too."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 7,
+   "id": "87b949d1",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:52.412132Z",
+     "iopub.status.busy": "2024-11-11T23:45:52.411629Z",
+     "iopub.status.idle": "2024-11-11T23:45:52.852323Z",
+     "shell.execute_reply": "2024-11-11T23:45:52.850977Z"
+    },
+    "id": "lV_S5ZL5MidD",
+    "papermill": {
+     "duration": 0.458116,
+     "end_time": "2024-11-11T23:45:52.854963",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:52.396847",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Hello Jesús! It's nice to meet you. 😊  What can I do for you today? \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "chat = flash.start_chat(history=[])\n",
+    "response = chat.send_message('Hello! My name is Jesús.')\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 8,
+   "id": "8359973a",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:52.884337Z",
+     "iopub.status.busy": "2024-11-11T23:45:52.883320Z",
+     "iopub.status.idle": "2024-11-11T23:45:54.104424Z",
+     "shell.execute_reply": "2024-11-11T23:45:54.103286Z"
+    },
+    "id": "7b0372c3c64a",
+    "papermill": {
+     "duration": 1.238367,
+     "end_time": "2024-11-11T23:45:54.106814",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:52.868447",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Of course! Dinosaurs are endlessly fascinating.  Here's something interesting:\n",
+      "\n",
+      "**Did you know that some dinosaurs had feathers?**\n",
+      "\n",
+      "While we often picture dinosaurs as scaly, many species, especially those closely related to birds, sported feathers!  The discovery of feathered dinosaurs like *Archaeopteryx* and *Microraptor* helped scientists understand the evolutionary link between dinosaurs and birds.  These feathers could have served different purposes like insulation, display, and even flight. \n",
+      "\n",
+      "What else would you like to know about dinosaurs?  😊 \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "response = chat.send_message('Can you tell something interesting about dinosaurs?')\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 9,
+   "id": "57b76fc8",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:54.137307Z",
+     "iopub.status.busy": "2024-11-11T23:45:54.136772Z",
+     "iopub.status.idle": "2024-11-11T23:45:54.946385Z",
+     "shell.execute_reply": "2024-11-11T23:45:54.944900Z"
+    },
+    "id": "d3f9591392a7",
+    "papermill": {
+     "duration": 0.828149,
+     "end_time": "2024-11-11T23:45:54.948838",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:54.120689",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Of course! You are Jesús.  😊  It's nice to chat with you!  Do you have any other dinosaur questions? \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "# While you have the `chat` object around, the conversation state\n",
+    "# persists. Confirm that by asking if it knows my name.\n",
+    "response = chat.send_message('Do you remember what my name is?')\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "72dd8a87",
+   "metadata": {
+    "id": "2KAjpr1200sW",
+    "papermill": {
+     "duration": 0.013859,
+     "end_time": "2024-11-11T23:45:54.976402",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:54.962543",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Choose a model\n",
+    "\n",
+    "The Gemini API provides access to a number of models from the Gemini model family. Read about the available models and their capabilities on the [model overview page](https://ai.google.dev/gemini-api/docs/models/gemini).\n",
+    "\n",
+    "In this step you'll use the API to list all of the available models."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 10,
+   "id": "dfba68f3",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:55.005813Z",
+     "iopub.status.busy": "2024-11-11T23:45:55.004979Z",
+     "iopub.status.idle": "2024-11-11T23:45:55.454823Z",
+     "shell.execute_reply": "2024-11-11T23:45:55.453042Z"
+    },
+    "id": "uUUZa2uq2jDm",
+    "papermill": {
+     "duration": 0.467102,
+     "end_time": "2024-11-11T23:45:55.457368",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:54.990266",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "models/chat-bison-001\n",
+      "models/text-bison-001\n",
+      "models/embedding-gecko-001\n",
+      "models/gemini-1.0-pro-latest\n",
+      "models/gemini-1.0-pro\n",
+      "models/gemini-pro\n",
+      "models/gemini-1.0-pro-001\n",
+      "models/gemini-1.0-pro-vision-latest\n",
+      "models/gemini-pro-vision\n",
+      "models/gemini-1.5-pro-latest\n",
+      "models/gemini-1.5-pro-001\n",
+      "models/gemini-1.5-pro-002\n",
+      "models/gemini-1.5-pro\n",
+      "models/gemini-1.5-pro-exp-0801\n",
+      "models/gemini-1.5-pro-exp-0827\n",
+      "models/gemini-1.5-flash-latest\n",
+      "models/gemini-1.5-flash-001\n",
+      "models/gemini-1.5-flash-001-tuning\n",
+      "models/gemini-1.5-flash\n",
+      "models/gemini-1.5-flash-exp-0827\n",
+      "models/gemini-1.5-flash-002\n",
+      "models/gemini-1.5-flash-8b\n",
+      "models/gemini-1.5-flash-8b-001\n",
+      "models/gemini-1.5-flash-8b-latest\n",
+      "models/gemini-1.5-flash-8b-exp-0827\n",
+      "models/gemini-1.5-flash-8b-exp-0924\n",
+      "models/embedding-001\n",
+      "models/text-embedding-004\n",
+      "models/aqa\n"
+     ]
+    }
+   ],
+   "source": [
+    "for model in genai.list_models():\n",
+    "  print(model.name)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "17a9703e",
+   "metadata": {
+    "id": "rN49kSI54R1v",
+    "papermill": {
+     "duration": 0.013278,
+     "end_time": "2024-11-11T23:45:55.484313",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:55.471035",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "The [`models.list`](https://ai.google.dev/api/models#method:-models.list) response also returns additional information about the model's capabilities, like the token limits and supported parameters."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 11,
+   "id": "2d8eda64",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:55.513106Z",
+     "iopub.status.busy": "2024-11-11T23:45:55.512720Z",
+     "iopub.status.idle": "2024-11-11T23:45:55.958467Z",
+     "shell.execute_reply": "2024-11-11T23:45:55.957125Z"
+    },
+    "id": "k7JJ1K6j4Rl8",
+    "papermill": {
+     "duration": 0.463193,
+     "end_time": "2024-11-11T23:45:55.960980",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:55.497787",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Model(name='models/gemini-1.5-flash',\n",
+      "      base_model_id='',\n",
+      "      version='001',\n",
+      "      display_name='Gemini 1.5 Flash',\n",
+      "      description='Fast and versatile multimodal model for scaling across diverse tasks',\n",
+      "      input_token_limit=1000000,\n",
+      "      output_token_limit=8192,\n",
+      "      supported_generation_methods=['generateContent', 'countTokens'],\n",
+      "      temperature=1.0,\n",
+      "      max_temperature=2.0,\n",
+      "      top_p=0.95,\n",
+      "      top_k=40)\n"
+     ]
+    }
+   ],
+   "source": [
+    "for model in genai.list_models():\n",
+    "  if model.name == 'models/gemini-1.5-flash':\n",
+    "    print(model)\n",
+    "    break"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "34a730bb",
+   "metadata": {
+    "id": "5rU_UBlZdooM",
+    "papermill": {
+     "duration": 0.013308,
+     "end_time": "2024-11-11T23:45:55.988075",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:55.974767",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Explore generation parameters\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "28941669",
+   "metadata": {
+    "id": "G7NfEizeipbW",
+    "papermill": {
+     "duration": 0.013331,
+     "end_time": "2024-11-11T23:45:56.015768",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:56.002437",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Output length\n",
+    "\n",
+    "When generating text with an LLM, the output length affects cost and performance. Generating more tokens increases computation, leading to higher energy consumption, latency, and cost.\n",
+    "\n",
+    "To stop the model from generating tokens past a limit, you can specify the `max_output_length` parameter when using the Gemini API. Specifying this parameter does not influence the generation of the output tokens, so the output will not become more stylistically or textually succinct, but it will stop generating tokens once the specified length is reached. Prompt engineering may be required to generate a more complete output for your given limit."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 12,
+   "id": "a0e72729",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:56.045060Z",
+     "iopub.status.busy": "2024-11-11T23:45:56.044621Z",
+     "iopub.status.idle": "2024-11-11T23:45:58.159096Z",
+     "shell.execute_reply": "2024-11-11T23:45:58.157935Z"
+    },
+    "id": "qVf23JsIi9ma",
+    "papermill": {
+     "duration": 2.132057,
+     "end_time": "2024-11-11T23:45:58.161575",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:56.029518",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "## A World of Ghosts: A Summary of Pedro Páramo\n",
+      "\n",
+      "Juan Rulfo's **Pedro Páramo** is a haunting and fragmented novel that delves into the depths of memory, loss, and the enduring power of the past. It tells the story of Juan Preciado, a young man who journeys to the desolate town of Comala in search of his father, Pedro Páramo, a man he has only known through whispers and rumors. \n",
+      "\n",
+      "The journey itself becomes a descent into a world of ghosts, where the living and the dead coexist in a spectral tapestry. Comala, once a bustling town, is now a barren wasteland, its inhabitants long deceased but their memories lingering in the air. Juan encounters the ghosts of Pedro Páramo's family and past lovers, each offering fragments of the man's life and the town's tragic history.\n",
+      "\n",
+      "**The Ghosts of Comala:**\n",
+      "\n",
+      "Through the voices of these spectral figures, Juan slowly reconstructs the life of Pedro Páramo. He learns of Pedro's ruthlessness, his ambition, and his love for Susana San Juan, a woman whose beauty and loyalty were his undoing. Their love story, a tale of passion and betrayal, unfolds in fragmented scenes, with each ghost adding a piece to the puzzle.\n",
+      "\n",
+      "The echoes of Pedro's past reverberate through Comala. His love for Susana turned into obsession, leading him to manipulate and exploit the town's inhabitants. He ruthlessly\n"
+     ]
+    }
+   ],
+   "source": [
+    "short_model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash',\n",
+    "    generation_config=genai.GenerationConfig(max_output_tokens=300))\n",
+    "\n",
+    "response = short_model.generate_content('Write a 1000 word summary of Pedro Paramo by Juan Rulfo.')\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 13,
+   "id": "e86e6c2b",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:45:58.191027Z",
+     "iopub.status.busy": "2024-11-11T23:45:58.190610Z",
+     "iopub.status.idle": "2024-11-11T23:46:00.271948Z",
+     "shell.execute_reply": "2024-11-11T23:46:00.270221Z"
+    },
+    "id": "W-3kR2F5kdMR",
+    "papermill": {
+     "duration": 2.099194,
+     "end_time": "2024-11-11T23:46:00.274725",
+     "exception": false,
+     "start_time": "2024-11-11T23:45:58.175531",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "## Calavera for Juan Preciado\n",
+      "\n",
+      "A soul adrift, a wanderer lost,\n",
+      "To Comala he came, at what cost?\n",
+      "Juan Preciado, a name whispered low,\n",
+      "In a town of the dead, where shadows grow.\n",
+      "\n",
+      "His father, a ghost, a legend untold,\n",
+      "His mother's grief, a story to unfold.\n",
+      "He sought the truth, a father's embrace,\n",
+      "But found only echoes in time and space.\n",
+      "\n",
+      "The women of Comala, their beauty a curse,\n",
+      "Their love a torment, a love that would disperse.\n",
+      "Susana San Juan, a love unattainable,\n",
+      "Her touch a memory, a flame unbearable.\n",
+      "\n",
+      "His journey to find, his journey to know,\n",
+      "Led to a darkness, a desolate flow.\n",
+      "The silence of Comala, a chilling embrace,\n",
+      "A town of the dead, a ghostly space.\n",
+      "\n",
+      "Now, Juan Preciado, your skull adorned with flowers,\n",
+      "We remember your journey, through time's dark hours.\n",
+      "The story you sought, the truth you desired,\n",
+      "In the hearts of the living, your memory will be fired.\n",
+      "\n",
+      "So raise a glass, to the wanderer's soul,\n",
+      "In Comala's embrace, where stories unfold.\n",
+      "Juan Preciado, forever you roam,\n",
+      "In the echoes of silence, your spirit finds home. \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "response = short_model.generate_content('Write a Literary Calavera of Juan Preciado, character of Pedro Paramo book.')\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "7115c964",
+   "metadata": {
+    "id": "3ZhDSLB6lqqB",
+    "papermill": {
+     "duration": 0.013861,
+     "end_time": "2024-11-11T23:46:00.302894",
+     "exception": false,
+     "start_time": "2024-11-11T23:46:00.289033",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "Explore with your own prompts. Try a prompt with a restrictive output limit and then adjust the prompt to work within that limit."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "74f24241",
+   "metadata": {
+    "id": "alx-WaAvir_9",
+    "papermill": {
+     "duration": 0.013708,
+     "end_time": "2024-11-11T23:46:00.330479",
+     "exception": false,
+     "start_time": "2024-11-11T23:46:00.316771",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Temperature\n",
+    "\n",
+    "Temperature controls the degree of randomness in token selection. Higher temperatures result in a higher number of candidate tokens from which the next output token is selected, and can produce more diverse results, while lower temperatures have the opposite effect, such that a temperature of 0 results in greedy decoding, selecting the most probable token at each step.\n",
+    "\n",
+    "Temperature doesn't provide any guarantees of randomness, but it can be used to \"nudge\" the output somewhat."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 14,
+   "id": "14ad4415",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:46:00.360967Z",
+     "iopub.status.busy": "2024-11-11T23:46:00.360565Z",
+     "iopub.status.idle": "2024-11-11T23:51:02.987636Z",
+     "shell.execute_reply": "2024-11-11T23:51:02.986533Z"
+    },
+    "id": "SHraGMzqnZqt",
+    "papermill": {
+     "duration": 302.645734,
+     "end_time": "2024-11-11T23:51:02.990388",
+     "exception": false,
+     "start_time": "2024-11-11T23:46:00.344654",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Blue. \n",
+      " -------------------------\n",
+      "Blue. \n",
+      " -------------------------\n",
+      "Teal. \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n"
+     ]
+    }
+   ],
+   "source": [
+    "import time\n",
+    "high_temp_model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-001',\n",
+    "    generation_config=genai.GenerationConfig(temperature=2.0))\n",
+    "\n",
+    "for _ in range(5):\n",
+    "    response = high_temp_model.generate_content('Pick a random colour... (in a single word)')\n",
+    "    if response.parts:\n",
+    "        print(response.text, '-' * 25)\n",
+    "\n",
+    "    # Take a break before making a new API request\n",
+    "    time.sleep(60)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bf2a6ee6",
+   "metadata": {
+    "id": "z3J4pCTuof7e",
+    "papermill": {
+     "duration": 0.013944,
+     "end_time": "2024-11-11T23:51:03.019706",
+     "exception": false,
+     "start_time": "2024-11-11T23:51:03.005762",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "Now try the same prompt with temperature set to zero. Note that the output is not completely deterministic, as other parameters affect token selection, but the results will tend to be more stable."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 15,
+   "id": "9613fca8",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:51:03.050833Z",
+     "iopub.status.busy": "2024-11-11T23:51:03.050107Z",
+     "iopub.status.idle": "2024-11-11T23:53:34.899531Z",
+     "shell.execute_reply": "2024-11-11T23:53:34.898142Z"
+    },
+    "id": "clymkWv-PfUZ",
+    "papermill": {
+     "duration": 151.868336,
+     "end_time": "2024-11-11T23:53:34.902332",
+     "exception": false,
+     "start_time": "2024-11-11T23:51:03.033996",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Purple \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n",
+      "Purple \n",
+      " -------------------------\n"
+     ]
+    }
+   ],
+   "source": [
+    "low_temp_model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-001',\n",
+    "    generation_config=genai.GenerationConfig(temperature=0.0))\n",
+    "\n",
+    "for _ in range(5):\n",
+    "    response = low_temp_model.generate_content('Pick a random colour... (in a single word)')\n",
+    "    if response.parts:\n",
+    "        print(response.text, '-' * 25)\n",
+    "\n",
+    "    # Take a break before making a new API request\n",
+    "    time.sleep(30)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "d9c0263a",
+   "metadata": {
+    "id": "St5nt3vzitsZ",
+    "papermill": {
+     "duration": 0.014365,
+     "end_time": "2024-11-11T23:53:34.931271",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:34.916906",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Top-K and top-P\n",
+    "\n",
+    "Like temperature, top-K and top-P parameters are also used to control the diversity of the model's output.\n",
+    "\n",
+    "Top-K is a positive integer that defines the number of most probable tokens from which to select the output token. A top-K of 1 selects a single token, performing greedy decoding.\n",
+    "\n",
+    "Top-P defines the probability threshold that, once cumulatively exceeded, tokens stop being selected as candidates. A top-P of 0 is typically equivalent to greedy decoding, and a top-P of 1 typically selects every token in the model's vocabulary.\n",
+    "\n",
+    "When both are supplied, the Gemini API will filter top-K tokens first, then top-P and then finally sample from the candidate tokens using the supplied temperature.\n",
+    "\n",
+    "Run this example a number of times, change the settings and observe the change in output."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 16,
+   "id": "edde681c",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:34.961941Z",
+     "iopub.status.busy": "2024-11-11T23:53:34.961516Z",
+     "iopub.status.idle": "2024-11-11T23:53:38.200422Z",
+     "shell.execute_reply": "2024-11-11T23:53:38.199115Z"
+    },
+    "id": "lPlzpEavUV8F",
+    "papermill": {
+     "duration": 3.25728,
+     "end_time": "2024-11-11T23:53:38.202956",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:34.945676",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Bartholomew, a ginger tabby with a heart of gold and a belly of fluff, was bored. The sunbeams that usually danced on his favorite rug were obscured by a thick, grey cloud. The birds outside were silent, and even the mice in the garden seemed to have taken a day off. \n",
+      "\n",
+      "\"This is simply unacceptable,\" Bartholomew declared, fluffing his tail indignantly. He decided he needed an adventure. He'd heard whispers of a legendary catnip garden, a place where the scent was so potent it could send a cat into a blissful, purring trance.\n",
+      "\n",
+      "Bartholomew slipped out the cat flap, his whiskers twitching with anticipation. He followed the scent of fresh earth and blooming flowers, his emerald eyes scanning the neighborhood. He crossed a busy road, narrowly avoiding a speeding car, and squeezed through a hedge, his fur prickling with excitement.\n",
+      "\n",
+      "He found himself in a forgotten garden, overgrown with weeds and wild flowers. The air was thick with the sweet, heady scent of catnip. Bartholomew, unable to resist, rolled in the fragrant grass, purring with delight. \n",
+      "\n",
+      "Suddenly, a loud, booming voice startled him. A huge, black dog, with a collar studded with spikes, stood blocking his path. \n",
+      "\n",
+      "\"What are you doing in my garden, little furball?\" the dog growled.\n",
+      "\n",
+      "Bartholomew, though small, was brave. \"I'm on a quest,\" he declared, puffing out his chest. \"I'm looking for the legendary catnip garden.\"\n",
+      "\n",
+      "The dog chuckled, a deep, rumbling sound. \"You're in it, silly cat. This is the catnip garden.\"\n",
+      "\n",
+      "Bartholomew's eyes widened. He had been so caught up in the scent, he hadn't noticed the garden's true beauty. It was a wonderland of fragrant flowers, each one emitting a different, intoxicating aroma.\n",
+      "\n",
+      "The dog, whose name was Brutus, turned out to be a gentle giant. He told Bartholomew about the garden's history, how it was a secret haven for cats, a place where they could relax and be themselves. \n",
+      "\n",
+      "Bartholomew spent the rest of the day exploring the garden, rolling in the catnip, and making a new friend. He learned that adventure wasn't always about grand journeys, but about finding joy in the unexpected, and the kindness of a stranger, even if that stranger was a dog.\n",
+      "\n",
+      "As the sun began to set, Bartholomew, his fur smelling of catnip and his heart full of contentment, knew he had found something far more valuable than a legendary garden. He had found a friend, and a reminder that even the most ordinary day could be filled with adventure, if you just opened your eyes and your heart. \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-001',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        # These are the default values for gemini-1.5-flash-001.\n",
+    "        temperature=1.0,\n",
+    "        top_k=34,\n",
+    "        top_p=0.65,\n",
+    "    ))\n",
+    "\n",
+    "story_prompt = \"You are a creative writer. Write a short story about a cat who goes on an adventure.\"\n",
+    "response = model.generate_content(story_prompt)\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "2f2be8fa",
+   "metadata": {
+    "id": "rMrYs1koY6DX",
+    "papermill": {
+     "duration": 0.014543,
+     "end_time": "2024-11-11T23:53:38.233070",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:38.218527",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Prompting\n",
+    "\n",
+    "This section contains some prompts from the chapter for you to try out directly in the API. Try changing the text here to see how each prompt performs with different instructions, more examples, or any other changes you can think of."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "b8c9e504",
+   "metadata": {
+    "id": "hhj_tQidZJP7",
+    "papermill": {
+     "duration": 0.014597,
+     "end_time": "2024-11-11T23:53:38.262988",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:38.248391",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Zero-shot\n",
+    "\n",
+    "Zero-shot prompts are prompts that describe the request for the model directly.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1gzKKgDHwkAvexG5Up0LMtl1-6jKMKe4g\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 17,
+   "id": "341ca70d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:38.294644Z",
+     "iopub.status.busy": "2024-11-11T23:53:38.294220Z",
+     "iopub.status.idle": "2024-11-11T23:53:38.669319Z",
+     "shell.execute_reply": "2024-11-11T23:53:38.667958Z"
+    },
+    "id": "1_t-cwnDZzbH",
+    "papermill": {
+     "duration": 0.394217,
+     "end_time": "2024-11-11T23:53:38.672050",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:38.277833",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Sentiment: **POSITIVE**\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-001',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        temperature=0.1,\n",
+    "        top_p=1,\n",
+    "        max_output_tokens=5,\n",
+    "    ))\n",
+    "\n",
+    "zero_shot_prompt = \"\"\"Classify movie reviews as POSITIVE, NEUTRAL or NEGATIVE.\n",
+    "Review: \"Her\" is a disturbing study revealing the direction\n",
+    "humanity is headed if AI is allowed to keep evolving,\n",
+    "unchecked. I wish there were more movies like this masterpiece.\n",
+    "Sentiment: \"\"\"\n",
+    "\n",
+    "response = model.generate_content(zero_shot_prompt)\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4104ce61",
+   "metadata": {
+    "id": "3b5568bdeb11",
+    "papermill": {
+     "duration": 0.014657,
+     "end_time": "2024-11-11T23:53:38.701786",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:38.687129",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "#### Enum mode\n",
+    "\n",
+    "The models are trained to generate text, and can sometimes produce more text than you may wish for. In the preceding example, the model will output the label, sometimes it can include a preceding \"Sentiment\" label, and without an output token limit, it may also add explanatory text afterwards.\n",
+    "\n",
+    "The Gemini API has an [Enum mode](https://github.com/google-gemini/cookbook/blob/main/quickstarts/Enum.ipynb) feature that allows you to constrain the output to a fixed set of values."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 18,
+   "id": "586b5e2c",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:38.733387Z",
+     "iopub.status.busy": "2024-11-11T23:53:38.732965Z",
+     "iopub.status.idle": "2024-11-11T23:53:39.236898Z",
+     "shell.execute_reply": "2024-11-11T23:53:39.235690Z"
+    },
+    "id": "ad118a56c598",
+    "papermill": {
+     "duration": 0.5227,
+     "end_time": "2024-11-11T23:53:39.239299",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:38.716599",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "positive\n"
+     ]
+    }
+   ],
+   "source": [
+    "import enum\n",
+    "\n",
+    "class Sentiment(enum.Enum):\n",
+    "    POSITIVE = \"positive\"\n",
+    "    NEUTRAL = \"neutral\"\n",
+    "    NEGATIVE = \"negative\"\n",
+    "\n",
+    "\n",
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-001',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        response_mime_type=\"text/x.enum\",\n",
+    "        response_schema=Sentiment\n",
+    "    ))\n",
+    "\n",
+    "response = model.generate_content(zero_shot_prompt)\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "751bac6d",
+   "metadata": {
+    "id": "0udiSwNbv45W",
+    "papermill": {
+     "duration": 0.014607,
+     "end_time": "2024-11-11T23:53:39.268729",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:39.254122",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### One-shot and few-shot\n",
+    "\n",
+    "Providing an example of the expected response is known as a \"one-shot\" prompt. When you provide multiple examples, it is a \"few-shot\" prompt.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1jjWkjUSoMXmLvMJ7IzADr_GxHPJVV2bg\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 19,
+   "id": "4435280d",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:39.301251Z",
+     "iopub.status.busy": "2024-11-11T23:53:39.300829Z",
+     "iopub.status.idle": "2024-11-11T23:53:39.797961Z",
+     "shell.execute_reply": "2024-11-11T23:53:39.796449Z"
+    },
+    "id": "hd4mVUukwOKZ",
+    "papermill": {
+     "duration": 0.516412,
+     "end_time": "2024-11-11T23:53:39.800706",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:39.284294",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "```json\n",
+      "{\n",
+      "\"size\": \"large\",\n",
+      "\"type\": \"normal\",\n",
+      "\"ingredients\": [\"cheese\", \"pineapple\"]\n",
+      "}\n",
+      "``` \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-latest',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        temperature=0.1,\n",
+    "        top_p=1,\n",
+    "        max_output_tokens=250,\n",
+    "    ))\n",
+    "\n",
+    "few_shot_prompt = \"\"\"Parse a customer's pizza order into valid JSON:\n",
+    "\n",
+    "EXAMPLE:\n",
+    "I want a small pizza with cheese, tomato sauce, and pepperoni.\n",
+    "JSON Response:\n",
+    "```\n",
+    "{\n",
+    "\"size\": \"small\",\n",
+    "\"type\": \"normal\",\n",
+    "\"ingredients\": [\"cheese\", \"tomato sauce\", \"peperoni\"]\n",
+    "}\n",
+    "```\n",
+    "\n",
+    "EXAMPLE:\n",
+    "Can I get a large pizza with tomato sauce, basil and mozzarella\n",
+    "JSON Response:\n",
+    "```\n",
+    "{\n",
+    "\"size\": \"large\",\n",
+    "\"type\": \"normal\",\n",
+    "\"ingredients\": [\"tomato sauce\", \"basil\", \"mozzarella\"]\n",
+    "}\n",
+    "\n",
+    "ORDER:\n",
+    "\"\"\"\n",
+    "\n",
+    "customer_order = \"Give me a large with cheese & pineapple\"\n",
+    "\n",
+    "\n",
+    "response = model.generate_content([few_shot_prompt, customer_order])\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "bbdb25e7",
+   "metadata": {
+    "id": "021293096f08",
+    "papermill": {
+     "duration": 0.015662,
+     "end_time": "2024-11-11T23:53:39.831853",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:39.816191",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "#### JSON mode\n",
+    "\n",
+    "To provide control over the schema, and to ensure that you only receive JSON (with no other text or markdown), you can use the Gemini API's [JSON mode](https://github.com/google-gemini/cookbook/blob/main/quickstarts/JSON_mode.ipynb). This forces the model to constrain decoding, such that token selection is guided by the supplied schema."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 20,
+   "id": "1c52ef56",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:39.863709Z",
+     "iopub.status.busy": "2024-11-11T23:53:39.863279Z",
+     "iopub.status.idle": "2024-11-11T23:53:40.362563Z",
+     "shell.execute_reply": "2024-11-11T23:53:40.361175Z"
+    },
+    "id": "50fbf0260912",
+    "papermill": {
+     "duration": 0.518376,
+     "end_time": "2024-11-11T23:53:40.365086",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:39.846710",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "{\"ingredients\": [\"apple\", \"chocolate\"], \"size\": \"large\", \"type\": \"dessert\"}\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "import typing_extensions as typing\n",
+    "\n",
+    "class PizzaOrder(typing.TypedDict):\n",
+    "    size: str\n",
+    "    ingredients: list[str]\n",
+    "    type: str\n",
+    "\n",
+    "\n",
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-latest',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        temperature=0.1,\n",
+    "        response_mime_type=\"application/json\",\n",
+    "        response_schema=PizzaOrder,\n",
+    "    ))\n",
+    "\n",
+    "response = model.generate_content(\"Can I have a large dessert pizza with apple and chocolate\")\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "ad5eefbf",
+   "metadata": {
+    "id": "4a93e338e57c",
+    "papermill": {
+     "duration": 0.016289,
+     "end_time": "2024-11-11T23:53:40.397080",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:40.380791",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Chain of Thought (CoT)\n",
+    "\n",
+    "Direct prompting on LLMs can return answers quickly and (in terms of output token usage) efficiently, but they can be prone to hallucination. The answer may \"look\" correct (in terms of language and syntax) but is incorrect in terms of factuality and reasoning.\n",
+    "\n",
+    "Chain-of-Thought prompting is a technique where you instruct the model to output intermediate reasoning steps, and it typically gets better results, especially when combined with few-shot examples. It is worth noting that this technique doesn't completely eliminate hallucinations, and that it tends to cost more to run, due to the increased token count.\n",
+    "\n",
+    "As models like the Gemini family are trained to be \"chatty\" and provide reasoning steps, you can ask the model to be more direct in the prompt."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 21,
+   "id": "b8153da0",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:40.429741Z",
+     "iopub.status.busy": "2024-11-11T23:53:40.429339Z",
+     "iopub.status.idle": "2024-11-11T23:53:40.797864Z",
+     "shell.execute_reply": "2024-11-11T23:53:40.796330Z"
+    },
+    "id": "5715555db1c1",
+    "papermill": {
+     "duration": 0.388427,
+     "end_time": "2024-11-11T23:53:40.800556",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:40.412129",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "52 \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "prompt = \"\"\"When I was 4 years old, my partner was 3 times my age. Now, I\n",
+    "am 20 years old. How old is my partner? Return the answer immediately.\"\"\"\n",
+    "\n",
+    "model = genai.GenerativeModel('gemini-1.5-flash-latest')\n",
+    "response = model.generate_content(prompt)\n",
+    "\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f35564aa",
+   "metadata": {
+    "id": "e12b19677bfd",
+    "papermill": {
+     "duration": 0.015076,
+     "end_time": "2024-11-11T23:53:40.830901",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:40.815825",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "Now try the same approach, but indicate to the model that it should \"think step by step\"."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 22,
+   "id": "5048f1c5",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:40.862730Z",
+     "iopub.status.busy": "2024-11-11T23:53:40.862323Z",
+     "iopub.status.idle": "2024-11-11T23:53:41.565125Z",
+     "shell.execute_reply": "2024-11-11T23:53:41.563536Z"
+    },
+    "id": "ffd7536a481f",
+    "papermill": {
+     "duration": 0.721879,
+     "end_time": "2024-11-11T23:53:41.567708",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:40.845829",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Here's how to solve this:\n",
+      "\n",
+      "* **When you were 4:** Your partner was 3 times your age, so they were 4 * 3 = 12 years old.\n",
+      "* **Age difference:** Your partner is 12 - 4 = 8 years older than you.\n",
+      "* **Current age:** Since you are now 20, your partner is 20 + 8 = **28 years old**. \n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "prompt = \"\"\"When I was 4 years old, my partner was 3 times my age. Now,\n",
+    "I am 20 years old. How old is my partner? Let's think step by step.\"\"\"\n",
+    "\n",
+    "response = model.generate_content(prompt)\n",
+    "print(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "be1c114e",
+   "metadata": {
+    "id": "oiLgBQJj0V53",
+    "papermill": {
+     "duration": 0.015823,
+     "end_time": "2024-11-11T23:53:41.599622",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:41.583799",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### ReAct: Reason and act\n",
+    "\n",
+    "In this example you will run a ReAct prompt directly in the Gemini API and perform the searching steps yourself. As this prompt follows a well-defined structure, there are frameworks available that wrap the prompt into easier-to-use APIs that make tool calls automatically, such as the LangChain example from the chapter.\n",
+    "\n",
+    "To try this out with the Wikipedia search engine, check out the [Searching Wikipedia with ReAct](https://github.com/google-gemini/cookbook/blob/main/examples/Search_Wikipedia_using_ReAct.ipynb) cookbook example.\n",
+    "\n",
+    "\n",
+    "> Note: The prompt and in-context examples used here are from [https://github.com/ysymyth/ReAct](https://github.com/ysymyth/ReAct) which is published under a [MIT license](https://opensource.org/licenses/MIT), Copyright (c) 2023 Shunyu Yao.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/18oo63Lwosd-bQ6Ay51uGogB3Wk3H8XMO\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 23,
+   "id": "f5bc6380",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:41.633121Z",
+     "iopub.status.busy": "2024-11-11T23:53:41.632131Z",
+     "iopub.status.idle": "2024-11-11T23:53:41.640368Z",
+     "shell.execute_reply": "2024-11-11T23:53:41.639256Z"
+    },
+    "id": "cBgyNJ5z0VSs",
+    "papermill": {
+     "duration": 0.02803,
+     "end_time": "2024-11-11T23:53:41.642787",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:41.614757",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": [
+    "model_instructions = \"\"\"\n",
+    "Solve a question answering task with interleaving Thought, Action, Observation steps. Thought can reason about the current situation,\n",
+    "Observation is understanding relevant information from an Action's output and Action can be one of three types:\n",
+    " (1) <search>entity</search>, which searches the exact entity on Wikipedia and returns the first paragraph if it exists. If not, it\n",
+    "     will return some similar entities to search and you can try to search the information from those topics.\n",
+    " (2) <lookup>keyword</lookup>, which returns the next sentence containing keyword in the current context. This only does exact matches,\n",
+    "     so keep your searches short.\n",
+    " (3) <finish>answer</finish>, which returns the answer and finishes the task.\n",
+    "\"\"\"\n",
+    "\n",
+    "example1 = \"\"\"Question\n",
+    "Musician and satirist Allie Goertz wrote a song about the \"The Simpsons\" character Milhouse, who Matt Groening named after who?\n",
+    "\n",
+    "Thought 1\n",
+    "The question simplifies to \"The Simpsons\" character Milhouse is named after who. I only need to search Milhouse and find who it is named after.\n",
+    "\n",
+    "Action 1\n",
+    "<search>Milhouse</search>\n",
+    "\n",
+    "Observation 1\n",
+    "Milhouse Mussolini Van Houten is a recurring character in the Fox animated television series The Simpsons voiced by Pamela Hayden and created by Matt Groening.\n",
+    "\n",
+    "Thought 2\n",
+    "The paragraph does not tell who Milhouse is named after, maybe I can look up \"named after\".\n",
+    "\n",
+    "Action 2\n",
+    "<lookup>named after</lookup>\n",
+    "\n",
+    "Observation 2\n",
+    "Milhouse was named after U.S. president Richard Nixon, whose middle name was Milhous.\n",
+    "\n",
+    "Thought 3\n",
+    "Milhouse was named after U.S. president Richard Nixon, so the answer is Richard Nixon.\n",
+    "\n",
+    "Action 3\n",
+    "<finish>Richard Nixon</finish>\n",
+    "\"\"\"\n",
+    "\n",
+    "example2 = \"\"\"Question\n",
+    "What is the elevation range for the area that the eastern sector of the Colorado orogeny extends into?\n",
+    "\n",
+    "Thought 1\n",
+    "I need to search Colorado orogeny, find the area that the eastern sector of the Colorado orogeny extends into, then find the elevation range of the area.\n",
+    "\n",
+    "Action 1\n",
+    "<search>Colorado orogeny</search>\n",
+    "\n",
+    "Observation 1\n",
+    "The Colorado orogeny was an episode of mountain building (an orogeny) in Colorado and surrounding areas.\n",
+    "\n",
+    "Thought 2\n",
+    "It does not mention the eastern sector. So I need to look up eastern sector.\n",
+    "\n",
+    "Action 2\n",
+    "<lookup>eastern sector</lookup>\n",
+    "\n",
+    "Observation 2\n",
+    "The eastern sector extends into the High Plains and is called the Central Plains orogeny.\n",
+    "\n",
+    "Thought 3\n",
+    "The eastern sector of Colorado orogeny extends into the High Plains. So I need to search High Plains and find its elevation range.\n",
+    "\n",
+    "Action 3\n",
+    "<search>High Plains</search>\n",
+    "\n",
+    "Observation 3\n",
+    "High Plains refers to one of two distinct land regions\n",
+    "\n",
+    "Thought 4\n",
+    "I need to instead search High Plains (United States).\n",
+    "\n",
+    "Action 4\n",
+    "<search>High Plains (United States)</search>\n",
+    "\n",
+    "Observation 4\n",
+    "The High Plains are a subregion of the Great Plains. From east to west, the High Plains rise in elevation from around 1,800 to 7,000 ft (550 to 2,130m).\n",
+    "\n",
+    "Thought 5\n",
+    "High Plains rise in elevation from around 1,800 to 7,000 ft, so the answer is 1,800 to 7,000 ft.\n",
+    "\n",
+    "Action 5\n",
+    "<finish>1,800 to 7,000 ft</finish>\n",
+    "\"\"\"\n",
+    "\n",
+    "# Come up with more examples yourself, or take a look through https://github.com/ysymyth/ReAct/\n",
+    "example3 = \"\"\"Question\n",
+    "Which magazine was started first Arthur’s Magazine or First for Women?\n",
+    "\n",
+    "Thought 1\n",
+    "I need to search Arthur’s Magazine and First for Women, and find which was started first.\n",
+    "\n",
+    "Action 1\n",
+    "<search>Arthur’s Magazine</search>\n",
+    "\n",
+    "Observation 1\n",
+    "Arthur’s Magazine (1844-1846) was an American literary periodical published in Philadelphia in the 19th century.\n",
+    "\n",
+    "Thought 2\n",
+    "Arthur’s Magazine was started in 1844. I need to search First for Women next.\n",
+    "\n",
+    "Action 2\n",
+    "<lookup>First for Women</lookup>\n",
+    "\n",
+    "Observation 2\n",
+    "First for Women is a woman’s magazine published by Bauer Media Group in the USA.[1] The magazine was started in 1989.\n",
+    "\n",
+    "Thought 3\n",
+    "First for Women was started in 1989. 1844 (Arthur’s Magazine) < 1989 (First for Women), so Arthur’s Magazine was started first.\n",
+    "\n",
+    "Action 3\n",
+    "<finish>Arthur’s Magazine</finish>\n",
+    "\"\"\""
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "13f8a1e9",
+   "metadata": {
+    "id": "C3wbfstjTgey",
+    "papermill": {
+     "duration": 0.015408,
+     "end_time": "2024-11-11T23:53:41.673989",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:41.658581",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "To capture a single step at a time, while ignoring any hallucinated Observation steps, you will use `stop_sequences` to end the generation process. The steps are `Thought`, `Action`, `Observation`, in that order."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 24,
+   "id": "80ba36a6",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:41.707800Z",
+     "iopub.status.busy": "2024-11-11T23:53:41.706788Z",
+     "iopub.status.idle": "2024-11-11T23:53:43.521332Z",
+     "shell.execute_reply": "2024-11-11T23:53:43.520102Z"
+    },
+    "id": "8mxrXRkRTdXm",
+    "papermill": {
+     "duration": 1.833731,
+     "end_time": "2024-11-11T23:53:43.523812",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:41.690081",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Thought 1\n",
+      "I need to search the Transformers NLP paper, and find the authors and their ages. Then I need to determine the youngest.\n",
+      "\n",
+      "Action 1\n",
+      "<search>Transformers NLP paper</search>\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "question = \"\"\"Question\n",
+    "Who was the youngest author listed on the transformers NLP paper?\n",
+    "\"\"\"\n",
+    "\n",
+    "model = genai.GenerativeModel('gemini-1.5-flash')\n",
+    "react_chat = model.start_chat()\n",
+    "\n",
+    "# You will perform the Action, so generate up to, but not including, the Observation.\n",
+    "config = genai.GenerationConfig(stop_sequences=[\"\\nObservation\"])\n",
+    "\n",
+    "resp = react_chat.send_message(\n",
+    "    [model_instructions, example1, example2, example3, question],\n",
+    "    generation_config=config)\n",
+    "print(resp.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "8570ccd9",
+   "metadata": {
+    "id": "aW2PIdLbVv3l",
+    "papermill": {
+     "duration": 0.015297,
+     "end_time": "2024-11-11T23:53:43.554389",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:43.539092",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "Now you can perform this research yourself and supply it back to the model."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 25,
+   "id": "686958dc",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:43.586618Z",
+     "iopub.status.busy": "2024-11-11T23:53:43.586218Z",
+     "iopub.status.idle": "2024-11-11T23:53:44.125604Z",
+     "shell.execute_reply": "2024-11-11T23:53:44.124353Z"
+    },
+    "id": "mLMc0DZaV9g2",
+    "papermill": {
+     "duration": 0.558684,
+     "end_time": "2024-11-11T23:53:44.128275",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:43.569591",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "Thought 2\n",
+      "The observation does not give us ages of the authors. I need to search each author individually to find their ages.\n",
+      "\n",
+      "Action 2\n",
+      "<search>Ashish Vaswani</search>\n",
+      "\n"
+     ]
+    }
+   ],
+   "source": [
+    "observation = \"\"\"Observation 1\n",
+    "[1706.03762] Attention Is All You Need\n",
+    "Ashish Vaswani, Noam Shazeer, Niki Parmar, Jakob Uszkoreit, Llion Jones, Aidan N. Gomez, Lukasz Kaiser, Illia Polosukhin\n",
+    "We propose a new simple network architecture, the Transformer, based solely on attention mechanisms, dispensing with recurrence and convolutions entirely.\n",
+    "\"\"\"\n",
+    "resp = react_chat.send_message(observation, generation_config=config)\n",
+    "print(resp.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4dac0559",
+   "metadata": {
+    "id": "bo0tzf4nX6dA",
+    "papermill": {
+     "duration": 0.015067,
+     "end_time": "2024-11-11T23:53:44.159316",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.144249",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "This process repeats until the `<finish>` action is reached. You can continue running this yourself if you like, or try the [Wikipedia example](https://github.com/google-gemini/cookbook/blob/main/examples/Search_Wikipedia_using_ReAct.ipynb) to see a fully automated ReAct system at work."
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f5e28223",
+   "metadata": {
+    "id": "jPiZ_eIIaVPt",
+    "papermill": {
+     "duration": 0.014867,
+     "end_time": "2024-11-11T23:53:44.189881",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.175014",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Code prompting"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "54e97cd1",
+   "metadata": {
+    "id": "ZinKamwXeR6C",
+    "papermill": {
+     "duration": 0.015291,
+     "end_time": "2024-11-11T23:53:44.220469",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.205178",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Generating code\n",
+    "\n",
+    "The Gemini family of models can be used to generate code, configuration and scripts. Generating code can be helpful when learning to code, learning a new language or for rapidly generating a first draft.\n",
+    "\n",
+    "It's important to be aware that since LLMs can't reason, and can repeat training data, it's essential to read and test your code first, and comply with any relevant licenses.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1YX71JGtzDjXQkgdes8bP6i3oH5lCRKxv\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 26,
+   "id": "8374a1eb",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:44.253483Z",
+     "iopub.status.busy": "2024-11-11T23:53:44.252591Z",
+     "iopub.status.idle": "2024-11-11T23:53:44.749660Z",
+     "shell.execute_reply": "2024-11-11T23:53:44.748517Z"
+    },
+    "id": "fOQP9pqmeUO1",
+    "papermill": {
+     "duration": 0.516538,
+     "end_time": "2024-11-11T23:53:44.752210",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.235672",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/markdown": [
+       "```python\n",
+       "def factorial(n):\n",
+       "  if n == 0:\n",
+       "    return 1\n",
+       "  else:\n",
+       "    return n * factorial(n-1)\n",
+       "```"
+      ],
+      "text/plain": [
+       "<IPython.core.display.Markdown object>"
+      ]
+     },
+     "execution_count": 26,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-latest',\n",
+    "    generation_config=genai.GenerationConfig(\n",
+    "        temperature=1,\n",
+    "        top_p=1,\n",
+    "        max_output_tokens=1024,\n",
+    "    ))\n",
+    "\n",
+    "# Gemini 1.5 models are very chatty, so it helps to specify they stick to the code.\n",
+    "code_prompt = \"\"\"\n",
+    "Write a Python function to calculate the factorial of a number. No explanation, provide only the code.\n",
+    "\"\"\"\n",
+    "\n",
+    "response = model.generate_content(code_prompt)\n",
+    "Markdown(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "f9533292",
+   "metadata": {
+    "id": "wlBMWSFhgVRQ",
+    "papermill": {
+     "duration": 0.015392,
+     "end_time": "2024-11-11T23:53:44.783031",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.767639",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Code execution\n",
+    "\n",
+    "The Gemini API can automatically run generated code too, and will return the output.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/11veFr_VYEwBWcLkhNLr-maCG0G8sS_7Z\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 27,
+   "id": "38ba92f1",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:44.816842Z",
+     "iopub.status.busy": "2024-11-11T23:53:44.816437Z",
+     "iopub.status.idle": "2024-11-11T23:53:54.544114Z",
+     "shell.execute_reply": "2024-11-11T23:53:54.542860Z"
+    },
+    "id": "jT3OfWYfhjRL",
+    "papermill": {
+     "duration": 9.748234,
+     "end_time": "2024-11-11T23:53:54.546652",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:44.798418",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/markdown": [
+       "The only even prime number is 2.  All other even numbers are divisible by 2, and therefore not prime. \n",
+       "\n",
+       "The sum of the first 14 prime numbers, including the only even prime, is:\n",
+       "\n",
+       "\n",
+       "``` python\n",
+       "import sympy\n",
+       "\n",
+       "primes = sympy.primerange(0, 100)\n",
+       "print(f'The first 14 prime numbers are: {primes[:14]}')\n",
+       "sum_of_primes = sum(primes[:14])\n",
+       "print(f'The sum of the first 14 prime numbers is: {sum_of_primes}')\n",
+       "\n",
+       "```\n",
+       "```\n",
+       "Traceback (most recent call last):\n",
+       "  File \"<string>\", line 5, in <module>\n",
+       "TypeError: 'generator' object is not subscriptable\n",
+       "\n",
+       "```\n",
+       "Ah, it seems I made a mistake.  `sympy.primerange` returns a generator, not a list, so it can't be directly subscripted. Let's try a different approach.\n",
+       "\n",
+       "\n",
+       "``` python\n",
+       "import sympy\n",
+       "\n",
+       "primes = list(sympy.primerange(0, 100))\n",
+       "print(f'The first 14 prime numbers are: {primes[:14]}')\n",
+       "sum_of_primes = sum(primes[:14])\n",
+       "print(f'The sum of the first 14 prime numbers is: {sum_of_primes}')\n",
+       "\n",
+       "```\n",
+       "```\n",
+       "The first 14 prime numbers are: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43]\n",
+       "The sum of the first 14 prime numbers is: 281\n",
+       "\n",
+       "```\n",
+       "The sum of the first 14 prime numbers is **281**. This includes the only even prime number, 2. \n"
+      ],
+      "text/plain": [
+       "<IPython.core.display.Markdown object>"
+      ]
+     },
+     "execution_count": 27,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "model = genai.GenerativeModel(\n",
+    "    'gemini-1.5-flash-latest',\n",
+    "    tools='code_execution')\n",
+    "\n",
+    "code_exec_prompt = \"\"\"\n",
+    "Calculate the sum of the first 14 prime numbers. Only consider the even primes, and make sure you get them all.\n",
+    "\"\"\"\n",
+    "\n",
+    "response = model.generate_content(code_exec_prompt)\n",
+    "Markdown(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "4ad44cd7",
+   "metadata": {
+    "id": "ZspT1GSkjG6d",
+    "papermill": {
+     "duration": 0.015525,
+     "end_time": "2024-11-11T23:53:54.578034",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:54.562509",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "While this looks like a single-part response, you can inspect the response to see the each of the steps: initial text, code generation, execution results, and final text summary."
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 28,
+   "id": "c622e5c7",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:54.611619Z",
+     "iopub.status.busy": "2024-11-11T23:53:54.610771Z",
+     "iopub.status.idle": "2024-11-11T23:53:54.617473Z",
+     "shell.execute_reply": "2024-11-11T23:53:54.616452Z"
+    },
+    "id": "j4gQVzcRjRX-",
+    "papermill": {
+     "duration": 0.02668,
+     "end_time": "2024-11-11T23:53:54.620339",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:54.593659",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "name": "stdout",
+     "output_type": "stream",
+     "text": [
+      "text: \"The only even prime number is 2.  All other even numbers are divisible by 2, and therefore not prime. \\n\\nThe sum of the first 14 prime numbers, including the only even prime, is:\\n\\n\"\n",
+      "\n",
+      "-----\n",
+      "executable_code {\n",
+      "  language: PYTHON\n",
+      "  code: \"\\nimport sympy\\n\\nprimes = sympy.primerange(0, 100)\\nprint(f\\'The first 14 prime numbers are: {primes[:14]}\\')\\nsum_of_primes = sum(primes[:14])\\nprint(f\\'The sum of the first 14 prime numbers is: {sum_of_primes}\\')\\n\"\n",
+      "}\n",
+      "\n",
+      "-----\n",
+      "code_execution_result {\n",
+      "  outcome: OUTCOME_OK\n",
+      "  output: \"Traceback (most recent call last):\\n  File \\\"<string>\\\", line 5, in <module>\\nTypeError: \\'generator\\' object is not subscriptable\\n\"\n",
+      "}\n",
+      "\n",
+      "-----\n",
+      "text: \"Ah, it seems I made a mistake.  `sympy.primerange` returns a generator, not a list, so it can\\'t be directly subscripted. Let\\'s try a different approach.\\n\\n\"\n",
+      "\n",
+      "-----\n",
+      "executable_code {\n",
+      "  language: PYTHON\n",
+      "  code: \"\\nimport sympy\\n\\nprimes = list(sympy.primerange(0, 100))\\nprint(f\\'The first 14 prime numbers are: {primes[:14]}\\')\\nsum_of_primes = sum(primes[:14])\\nprint(f\\'The sum of the first 14 prime numbers is: {sum_of_primes}\\')\\n\"\n",
+      "}\n",
+      "\n",
+      "-----\n",
+      "code_execution_result {\n",
+      "  outcome: OUTCOME_OK\n",
+      "  output: \"The first 14 prime numbers are: [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43]\\nThe sum of the first 14 prime numbers is: 281\\n\"\n",
+      "}\n",
+      "\n",
+      "-----\n",
+      "text: \"The sum of the first 14 prime numbers is **281**. This includes the only even prime number, 2. \\n\"\n",
+      "\n",
+      "-----\n"
+     ]
+    }
+   ],
+   "source": [
+    "for part in response.candidates[0].content.parts:\n",
+    "    print(part)\n",
+    "    print(\"-----\")"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "502d86b5",
+   "metadata": {
+    "id": "1gUX8QzCj4d5",
+    "papermill": {
+     "duration": 0.015547,
+     "end_time": "2024-11-11T23:53:54.651855",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:54.636308",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "### Explaining code\n",
+    "\n",
+    "The Gemini family of models can explain code to you too.\n",
+    "\n",
+    "<table align=left>\n",
+    "  <td>\n",
+    "    <a target=\"_blank\" href=\"https://aistudio.google.com/prompts/1N7LGzWzCYieyOf_7bAG4plrmkpDNmUyb\"><img src=\"https://ai.google.dev/site-assets/images/marketing/home/icon-ais.png\" style=\"height: 24px\" height=24/> Open in AI Studio</a>\n",
+    "  </td>\n",
+    "</table>"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": 29,
+   "id": "ec0374c4",
+   "metadata": {
+    "execution": {
+     "iopub.execute_input": "2024-11-11T23:53:54.686233Z",
+     "iopub.status.busy": "2024-11-11T23:53:54.685096Z",
+     "iopub.status.idle": "2024-11-11T23:53:58.291700Z",
+     "shell.execute_reply": "2024-11-11T23:53:58.290485Z"
+    },
+    "id": "7_jPMMoxkIEb",
+    "papermill": {
+     "duration": 3.626424,
+     "end_time": "2024-11-11T23:53:58.294252",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:54.667828",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [
+    {
+     "data": {
+      "text/markdown": [
+       "This file is a bash script named `git-prompt.sh`,  designed to enhance your command prompt with Git repository information. Here's a breakdown of its purpose and why you might use it:\n",
+       "\n",
+       "**What it does:**\n",
+       "\n",
+       "* **Adds Git Information to Your Prompt:** When you're inside a Git repository, this script modifies your command prompt to display:\n",
+       "    * **Current Branch:**  Shows the current branch you're working on.\n",
+       "    * **Status Indicators:**  Indicates if the repository has unstaged changes, staged changes, conflicts, untracked files, or stashes.\n",
+       "    * **Upstream Tracking:**  Shows your current branch's relationship to its upstream remote branch (if you're tracking one). \n",
+       "    * **Username and Repository:**  (Optional) Displays the username and repository name if configured.\n",
+       "* **Customizability:**  The script provides a wealth of configuration options to tailor the appearance of the prompt, such as:\n",
+       "    * **Colors:** Change the colors of the elements displayed.\n",
+       "    * **Symbols:**  Choose symbols to represent different statuses.\n",
+       "    * **Prefix and Suffix:**  Add custom text before or after the Git information.\n",
+       "    * **Themes:**  Use predefined themes for common color schemes or create your own custom themes. \n",
+       "* **Virtual Environment Integration:** The script can also integrate with virtual environments (like Python's `virtualenv` or Node's `nvm`) to display the currently active environment in the prompt.\n",
+       "\n",
+       "**Why you would use it:**\n",
+       "\n",
+       "* **Enhanced Awareness:** Makes it immediately clear which Git repository you're working in and its current state. This can save you time and prevent mistakes. \n",
+       "* **Simplified Workflow:**  Allows you to quickly glance at the prompt to understand the repository's status without needing to run separate Git commands.\n",
+       "* **Customization:**  Provides a powerful and flexible way to customize the information displayed in your prompt, making it visually appealing and informative.\n",
+       "\n",
+       "**How to Use It:**\n",
+       "\n",
+       "1. **Download:** Obtain the `git-prompt.sh` script. \n",
+       "2. **Placement:**  Place the script in a location accessible from your shell environment (e.g., your home directory, a directory in your PATH).\n",
+       "3. **Source It:** In your shell's configuration file (e.g., `.bashrc`, `.zshrc`), add the following line:\n",
+       "   ```bash\n",
+       "   source /path/to/git-prompt.sh\n",
+       "   ```\n",
+       "4. **Configuration:**  Customize the script's behavior by setting the various environment variables it defines (see the script for details).\n",
+       "\n",
+       "This script provides a robust and customizable way to integrate Git status information directly into your command prompt. It significantly improves awareness and workflow when working with Git repositories. \n"
+      ],
+      "text/plain": [
+       "<IPython.core.display.Markdown object>"
+      ]
+     },
+     "execution_count": 29,
+     "metadata": {},
+     "output_type": "execute_result"
+    }
+   ],
+   "source": [
+    "file_contents = !curl https://raw.githubusercontent.com/magicmonty/bash-git-prompt/refs/heads/master/gitprompt.sh\n",
+    "\n",
+    "explain_prompt = f\"\"\"\n",
+    "Please explain what this file does at a very high level. What is it, and why would I use it?\n",
+    "\n",
+    "```\n",
+    "{file_contents}\n",
+    "```\n",
+    "\"\"\"\n",
+    "\n",
+    "model = genai.GenerativeModel('gemini-1.5-flash-latest')\n",
+    "\n",
+    "response = model.generate_content(explain_prompt)\n",
+    "Markdown(response.text)"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "id": "3563a3e6",
+   "metadata": {
+    "id": "2a8266d97ce5",
+    "papermill": {
+     "duration": 0.015634,
+     "end_time": "2024-11-11T23:53:58.325747",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:58.310113",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "source": [
+    "## Learn more\n",
+    "\n",
+    "To learn more about prompting in depth:\n",
+    "\n",
+    "* Check out the whitepaper issued with today's content,\n",
+    "* Try out the apps listed at the top of this notebook ([TextFX](https://textfx.withgoogle.com/), [SQL Talk](https://sql-talk-r5gdynozbq-uc.a.run.app/) and [NotebookLM](https://notebooklm.google/)),\n",
+    "* Read the [Introduction to Prompting](https://ai.google.dev/gemini-api/docs/prompting-intro) from the Gemini API docs,\n",
+    "* Explore the Gemini API's [prompt gallery](https://ai.google.dev/gemini-api/prompts) and try them out in AI Studio,\n",
+    "* Check out the Gemini API cookbook for [inspirational examples](https://github.com/google-gemini/cookbook/blob/main/examples/) and [educational quickstarts](https://github.com/google-gemini/cookbook/blob/main/quickstarts/).\n",
+    "\n",
+    "And please share anything exciting you have tried in the Discord!"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "09905193",
+   "metadata": {
+    "papermill": {
+     "duration": 0.015795,
+     "end_time": "2024-11-11T23:53:58.357436",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:58.341641",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "f187c7ac",
+   "metadata": {
+    "papermill": {
+     "duration": 0.015715,
+     "end_time": "2024-11-11T23:53:58.389680",
+     "exception": false,
+     "start_time": "2024-11-11T23:53:58.373965",
+     "status": "completed"
+    },
+    "tags": []
+   },
+   "outputs": [],
+   "source": []
+  }
+ ],
+ "metadata": {
+  "colab": {
+   "name": "day-1-prompting.ipynb",
+   "toc_visible": true
+  },
+  "kaggle": {
+   "accelerator": "none",
+   "dataSources": [],
+   "dockerImageVersionId": 30786,
+   "isGpuEnabled": false,
+   "isInternetEnabled": true,
+   "language": "python",
+   "sourceType": "notebook"
+  },
+  "kernelspec": {
+   "display_name": "Python 3",
+   "language": "python",
+   "name": "python3"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.10.14"
+  },
+  "papermill": {
+   "default_parameters": {},
+   "duration": 522.069808,
+   "end_time": "2024-11-11T23:53:59.026470",
+   "environment_variables": {},
+   "exception": null,
+   "input_path": "__notebook__.ipynb",
+   "output_path": "__notebook__.ipynb",
+   "parameters": {},
+   "start_time": "2024-11-11T23:45:16.956662",
+   "version": "2.6.0"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
